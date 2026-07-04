@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Drive Finder - Search Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed-variant": "#6f3800",
+                      "tertiary-fixed-dim": "#ffb780",
+                      "surface-variant": "#e1e2eb",
+                      "on-secondary": "#ffffff",
+                      "surface": "#f9f9ff",
+                      "on-secondary-fixed-variant": "#005320",
+                      "secondary-fixed-dim": "#6ddd81",
+                      "inverse-on-surface": "#eff0fa",
+                      "on-primary-fixed": "#001a41",
+                      "on-background": "#191b22",
+                      "on-error-container": "#93000a",
+                      "surface-bright": "#f9f9ff",
+                      "surface-container-high": "#e7e7f1",
+                      "primary-container": "#2771df",
+                      "on-secondary-container": "#00722f",
+                      "primary-fixed-dim": "#adc6ff",
+                      "tertiary-container": "#b35e00",
+                      "surface-container-low": "#f2f3fd",
+                      "surface-dim": "#d8d9e3",
+                      "primary-fixed": "#d8e2ff",
+                      "on-primary-fixed-variant": "#004494",
+                      "error": "#ba1a1a",
+                      "secondary-fixed": "#89fa9b",
+                      "surface-container": "#ecedf7",
+                      "tertiary-fixed": "#ffdcc4",
+                      "on-surface": "#191b22",
+                      "primary": "#0058bd",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error": "#ffffff",
+                      "inverse-surface": "#2e3038",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-highest": "#e1e2eb",
+                      "outline-variant": "#c2c6d5",
+                      "on-secondary-fixed": "#002108",
+                      "background": "#f9f9ff",
+                      "error-container": "#ffdad6",
+                      "tertiary": "#8f4a00",
+                      "on-primary-container": "#fefcff",
+                      "surface-tint": "#005ac1",
+                      "secondary": "#006e2c",
+                      "inverse-primary": "#adc6ff",
+                      "secondary-container": "#86f898",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-container": "#fffbff",
+                      "on-tertiary-fixed": "#2f1400",
+                      "on-surface-variant": "#424753",
+                      "outline": "#727785"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-desktop": "40px",
+                      "gutter": "24px",
+                      "unit": "4px",
+                      "container-max": "1440px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-xl": ["Inter"],
+                      "label-md": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                      "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col font-body-md">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full sticky top-0 z-50 bg-surface dark:bg-surface-dim shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl icon-fill">cloud_sync</span>
+<span class="text-headline-md font-headline-md text-on-surface dark:text-on-surface">My Drive Finder</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant bg-surface-container-highest px-3 py-1.5 rounded-full">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed"></span>
+                🟢 동기화됨 (10분 전)
+            </div>
+<button class="text-on-surface-variant hover:bg-surface-variant/50 p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="sync">sync</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-variant/50 p-1 rounded-full transition-colors flex items-center justify-center overflow-hidden">
+<img alt="User profile" class="w-8 h-8 rounded-full object-cover" data-alt="A highly detailed close-up professional headshot of a corporate user looking confident, set against a clean minimalist light gray background. The lighting is soft and studio-quality, emphasizing a modern tech-savvy aesthetic suited for a business application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqKLuYp2yN9FVaUYYxOoMvjYUCPygVIfzv0nINbGRqEt6HpS27nlmd1HyL3PWm_n47Jh-xxURjXrg_woQenFkJEGc11NP6zLsTL9pfWL3qXkVNaRp6Q2-3xWMGANqa0udiGtEWaRoVFJzrlc9zjrYKVzDTaQ-OFLxVIm8_Wc0fCBjU7F8NlJbXDuYjYPOtVJTEqQ37SY2dfXnJMASWoVq-7U7VXeksJtM75FvPKbb9lBSODrSEqS2G"/>
+</button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar (Desktop) -->
+<nav class="h-screen w-64 hidden lg:flex flex-col bg-surface-container-low dark:bg-surface-container-low fixed left-0 top-0 pt-20 z-40 border-r border-outline-variant/30">
+<div class="p-6">
+<div class="text-label-sm font-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Manage Files</div>
+<div class="text-headline-md font-headline-md text-primary dark:text-inverse-primary mb-6">Drive Finder</div>
+<button class="w-full flex items-center justify-center gap-2 bg-primary text-on-primary font-label-md text-label-md py-3 px-4 rounded-lg hover:opacity-90 transition-opacity mb-8 shadow-sm">
+<span class="material-symbols-outlined text-lg">add</span>
+                    New Search
+                </button>
+</div>
+<ul class="flex flex-col gap-1 px-4">
+<li>
+<a class="text-primary dark:text-inverse-primary font-bold border-r-4 border-primary bg-primary-container/20 p-4 flex items-center gap-4 rounded-l-lg scale-98 duration-150" href="#">
+<span class="material-symbols-outlined icon-fill">search</span>
+                        Search
+                    </a>
+</li>
+<li>
+<a class="text-on-surface-variant dark:text-surface-variant p-4 flex items-center gap-4 hover:bg-surface-variant dark:hover:bg-surface-container-highest rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">folder</span>
+                        Folders
+                    </a>
+</li>
+<li>
+<a class="text-on-surface-variant dark:text-surface-variant p-4 flex items-center gap-4 hover:bg-surface-variant dark:hover:bg-surface-container-highest rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">history</span>
+                        Recents
+                    </a>
+</li>
+<li>
+<a class="text-on-surface-variant dark:text-surface-variant p-4 flex items-center gap-4 hover:bg-surface-variant dark:hover:bg-surface-container-highest rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+                        Settings
+                    </a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 lg:ml-64 p-margin-mobile md:p-margin-desktop overflow-y-auto w-full max-w-container-max mx-auto pb-24 lg:pb-margin-desktop">
+<div class="max-w-4xl mx-auto space-y-6">
+<!-- Folder Settings Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<h2 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Search Target</h2>
+<div class="flex flex-wrap items-center gap-3">
+<div class="flex items-center gap-2 text-body-md font-body-md font-medium">
+<span class="material-symbols-outlined text-primary">folder_open</span>
+                                My Drive <span class="text-outline-variant mx-1">/</span> 2026_재무기록
+                            </div>
+<div class="flex gap-2">
+<span class="bg-surface-container text-on-surface text-label-sm font-label-sm px-2.5 py-1 rounded-md border border-outline-variant/50">.xlsx</span>
+<span class="bg-surface-container text-on-surface text-label-sm font-label-sm px-2.5 py-1 rounded-md border border-outline-variant/50">.csv</span>
+</div>
+</div>
+</div>
+<button class="text-label-md font-label-md text-primary border border-primary/30 hover:bg-primary-container/10 px-4 py-2 rounded-lg transition-colors whitespace-nowrap">
+                        Change Folder
+                    </button>
+</div>
+<!-- Search Input Area -->
+<div class="bg-surface-container-lowest rounded-xl p-2 shadow-md border border-outline-variant/20 flex flex-col sm:flex-row focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all">
+<div class="flex-1 flex items-center px-4 py-2 border-b sm:border-b-0 sm:border-r border-outline-variant/30">
+<span class="material-symbols-outlined text-outline mr-3">search</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-body-lg font-body-lg placeholder-outline text-on-surface px-0 h-11" placeholder="Search words..." type="text"/>
+</div>
+<div class="flex items-center px-4 py-2 bg-surface-container-lowest sm:bg-transparent">
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="relative">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-6 bg-surface-variant rounded-full peer peer-focus:ring-4 peer-focus:ring-primary/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-error"></div>
+</div>
+<span class="text-label-md font-label-md text-on-surface-variant group-hover:text-on-surface transition-colors">Exclude words</span>
+</label>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-on-primary font-label-md text-label-md px-8 py-3 rounded-lg sm:ml-2 mt-2 sm:mt-0 transition-colors shadow-sm flex items-center justify-center gap-2 h-11">
+                        Search
+                    </button>
+</div>
+<!-- Results Area -->
+<div class="mt-8 space-y-4">
+<div class="flex justify-between items-end">
+<h3 class="text-headline-md font-headline-md text-on-surface">Results</h3>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Showing sample data</span>
+</div>
+<!-- Sample Result Card/Table -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
+<!-- Group Header -->
+<div class="bg-surface-container-low px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center cursor-pointer hover:bg-surface-container-highest transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary icon-fill">description</span>
+<div>
+<h4 class="text-body-md font-body-md font-medium text-on-surface">경조사비_내역.xlsx</h4>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-0.5">/My Drive/2026_재무기록/HR/</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="bg-secondary-container/30 text-secondary font-label-sm text-label-sm px-2.5 py-1 rounded-full">4 items found</span>
+<span class="material-symbols-outlined text-outline transition-transform duration-200">expand_less</span>
+</div>
+</div>
+<!-- Data Table (Desktop) / Cards (Mobile) -->
+<div class="w-full">
+<!-- Desktop Table View -->
+<div class="hidden md:block w-full overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-bright text-label-sm font-label-sm text-on-surface-variant border-b border-outline-variant/30 uppercase tracking-wider">
+<th class="px-6 py-3 font-medium">Date</th>
+<th class="px-6 py-3 font-medium">Category</th>
+<th class="px-6 py-3 font-medium">Name</th>
+<th class="px-6 py-3 font-medium">Amount</th>
+<th class="px-6 py-3 font-medium">Notes</th>
+</tr>
+</thead>
+<tbody class="text-body-sm font-body-sm">
+<tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-4 text-on-surface-variant">2026-03-15</td>
+<td class="px-6 py-4"><span class="bg-surface-variant/50 text-on-surface px-2 py-1 rounded text-xs">결혼식</span></td>
+<td class="px-6 py-4 text-on-surface font-medium">김철수</td>
+<td class="px-6 py-4 text-on-surface text-right pr-12 font-medium">100,000</td>
+<td class="px-6 py-4 text-on-surface-variant truncate max-w-[200px]">영업부 팀장 자녀 결혼식</td>
+</tr>
+<tr class="border-b border-outline-variant/10 bg-surface-container-lowest hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-4 text-on-surface-variant">2026-04-02</td>
+<td class="px-6 py-4"><span class="bg-surface-variant/50 text-on-surface px-2 py-1 rounded text-xs">장례식</span></td>
+<td class="px-6 py-4 text-on-surface font-medium">이영희</td>
+<td class="px-6 py-4 text-on-surface text-right pr-12 font-medium">50,000</td>
+<td class="px-6 py-4 text-on-surface-variant truncate max-w-[200px]">디자인팀 부친상</td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-4 text-on-surface-variant">2026-05-20</td>
+<td class="px-6 py-4"><span class="bg-surface-variant/50 text-on-surface px-2 py-1 rounded text-xs">결혼식</span></td>
+<td class="px-6 py-4 text-on-surface font-medium">박지성</td>
+<td class="px-6 py-4 text-on-surface text-right pr-12 font-medium">150,000</td>
+<td class="px-6 py-4 text-on-surface-variant truncate max-w-[200px]">대표이사 조카 결혼</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors bg-surface-container-lowest">
+<td class="px-6 py-4 text-on-surface-variant">2026-06-11</td>
+<td class="px-6 py-4"><span class="bg-surface-variant/50 text-on-surface px-2 py-1 rounded text-xs">돌잔치</span></td>
+<td class="px-6 py-4 text-on-surface font-medium">최동석</td>
+<td class="px-6 py-4 text-on-surface text-right pr-12 font-medium">50,000</td>
+<td class="px-6 py-4 text-on-surface-variant truncate max-w-[200px]">개발팀 돌잔치 참석</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Mobile Card View -->
+<div class="md:hidden flex flex-col p-4 gap-3 bg-surface-container-lowest">
+<div class="p-3 border border-outline-variant/30 rounded-lg bg-surface flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="text-label-sm font-label-sm text-on-surface-variant">2026-03-15</span>
+<span class="bg-surface-variant/50 text-on-surface px-2 py-1 rounded text-xs">결혼식</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-body-md font-body-md font-medium text-on-surface">김철수</span>
+<span class="text-body-md font-body-md font-medium text-on-surface">100,000</span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">영업부 팀장 자녀 결혼식</div>
+</div>
+<div class="p-3 border border-outline-variant/30 rounded-lg bg-surface flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="text-label-sm font-label-sm text-on-surface-variant">2026-04-02</span>
+<span class="bg-surface-variant/50 text-on-surface px-2 py-1 rounded text-xs">장례식</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-body-md font-body-md font-medium text-on-surface">이영희</span>
+<span class="text-body-md font-body-md font-medium text-on-surface">50,000</span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">디자인팀 부친상</div>
+</div>
+<!-- Adding fewer items for mobile brevity, implies scroll -->
+</div>
+</div>
+</div>
+<!-- Empty State (Hidden in this view, but structure provided per prompt) -->
+<!-- 
+                    <div class="flex flex-col items-center justify-center py-20 px-4 text-center border-2 border-dashed border-outline-variant/30 rounded-2xl bg-surface-container-lowest/50 mt-4">
+                        <div class="w-20 h-20 bg-surface-variant/30 rounded-full flex items-center justify-center mb-6 text-primary">
+                            <span class="material-symbols-outlined text-4xl">travel_explore</span>
+                        </div>
+                        <h3 class="text-headline-md font-headline-md text-on-surface mb-2">No active search</h3>
+                        <p class="text-body-md font-body-md text-on-surface-variant max-w-sm">Enter search terms to quickly explore local cached drive files.</p>
+                    </div> 
+                    -->
+</div>
+</div>
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 lg:hidden bg-surface dark:bg-surface-dim shadow-lg border-t border-outline-variant/10">
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-4 py-1 scale-90 duration-200" href="#">
+<span class="material-symbols-outlined icon-fill">search</span>
+<span class="text-label-sm font-label-sm-mobile mt-1">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:bg-surface-variant/30 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">folder</span>
+<span class="text-label-sm font-label-sm-mobile mt-1">Folders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:bg-surface-variant/30 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-label-sm font-label-sm-mobile mt-1">Recents</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline p-2 hover:bg-surface-variant/30 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-sm font-label-sm-mobile mt-1">Settings</span>
+</a>
+</nav>
+</body></html>

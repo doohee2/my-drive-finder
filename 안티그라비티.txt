@@ -1,0 +1,45 @@
+우리는 구글 드라이브 API를 연동하여 지정된 폴더 내의 엑셀(.xls, .xlsx) 및 CSV 파일을 브라우저 로컬 DB에 캐싱하고 고속으로 탐색하는 PWA 웹앱 '마이 드라이브 파인더(My Drive Finder)'를 개발할 거야. 
+기술 스택은 Next.js (App Router), TypeScript, Tailwind CSS, NextAuth.js(구글 인증), React Query, localForage(IndexedDB), xlsx(SheetJS), papaparse를 사용해 줘.
+
+내가 스티치(Stitch)를 통해 디자인한 프론트엔드 UI 코드(React + Tailwind)를 첨부할 테니, 이 코드를 프로젝트에 이식하고 아래의 마일스톤에 따라 실제 백엔드 로직 및 캐싱 엔진과 완벽하게 바인딩해 줘.
+
+---
+
+### [Phase 1: 프로젝트 세팅 및 스티치 UI 컴포넌트 이식]
+1. 현재 프로젝트 폴더에 Next.js 프로젝트를 생성하고 `serwist`를 도입하여 PWA(오프라인 캐싱, 홈 화면 설치, `manifest.json`) 환경을 구성해 줘.
+2. 내가 @design 폴더에 첨부한 스티치 UI 코드 code.html 과 이미지 예시 screen_web.png, screen_mobile.png를 분석하여, 아래와 같이 기능별로 깔끔하게 모듈화하여 `components/` 폴더에 분리해 줘:
+   - `Header.tsx`: 상단 바, 로고, 프로필 및 [로컬 캐시 동기화 상태 배지]
+   - `FolderSettings Card.tsx`: 타겟 폴더 경로 표시 및 [폴더 변경] 버튼 영역
+   - `SearchBar.tsx`: 메인 검색어(Include) Input 및 [+ 제외 단어 추가(Exclude)] 토글 Input 영역
+   - `SearchResults.tsx`: 파일별 섹션 그룹화, 데스크톱용 표(Table) 뷰, 모바일 PWA용 명함(Card) 뷰 전환 영역
+   - `EmptyState.tsx`: 초기 실행 또는 검색 결과가 없을 때의 안내 뷰
+
+### [Phase 2: 구글 인증 및 파일 피커(Picker) API 구축]
+1. NextAuth.js를 사용하여 Google OAuth 2.0 로그인을 구현하고, `https://www.googleapis.com/auth/drive.readonly` scope를 획득해 줘.
+2. API Route(`/api/drive/folders`, `/api/drive/files`)를 구현하여, 사용자가 구글 드라이브 폴더를 탐색하고 특정 타겟 폴더를 선택할 수 있게 해 줘.
+3. 타겟 폴더 선택 시 확장자가 `.xls`, `.xlsx`, `.csv`인 파일만 필터링하여 추적 대상으로 지정해 줘.
+
+### [Phase 3: 스마트 동기화 및 localForage(IndexedDB) 캐싱 엔진]
+1. 타겟 폴더 내 파일들을 관리하는 커스텀 훅 `useDriveSync`를 구현해 줘.
+2. **[동기화 메커니즘]:**
+   - 앱 로드 시 구글 API로 대상 파일 목록과 최종 수정일(`modifiedTime`) 메타데이터만 가볍게 조회해 줘.
+   - 로컬 `localForage`의 메타데이터와 비교하여 **'새로 추가된 파일'**이나 **'수정일이 변경된 파일'**만 선별적으로 다운로드(`/api/drive/download`)해 줘.
+   - 다운로드된 파일은 확장자에 따라 `xlsx` 또는 `papaparse`로 파싱하여 JSON 배열 형태로 로컬 DB에 병합 저장해 줘. 변경 사항이 없으면 다운로드 없이 로컬 캐시를 즉시 반환해 줘.
+3. 이 동기화 상태(동기화 중, 완료, 마지막 동기화 시간)를 `Header.tsx`의 [동기화 상태 배지] UI에 실시간으로 연결해 줘.
+
+### [Phase 4: 복합 검색 로직 및 UI 바인딩 (핵심 ⭐️)]
+1. `SearchBar.tsx`의 검색어(Include) 상태와 제외 단어(Exclude) 상태를 바탕으로 로컬 DB 데이터를 고속 검색하는 유틸리티를 작성해 줘.
+2. **[필터링 알고리즘]:**
+   - 각 레코드(행)의 모든 컬럼 값을 문자열로 병합한 뒤 검사해 줘. 
+   - `rowString.includes(keyword) && (!excludeKeyword || !rowString.includes(excludeKeyword))` 조건으로 필터링해 줘.
+3. **[반응형 결과 뷰 바인딩]:**
+   - 필터링된 결과를 '파일 이름' 기준으로 그룹화하여 `SearchResults.tsx`로 전달해 줘.
+   - 데스크톱 화면(`sm:`, `md:` 이상)에서는 스티치가 디자인한 **표(Table) 컴포넌트**에 바인딩하여 렌더링하고, 모바일 화면에서는 **명함 형태의 카드(Card) 컴포넌트**에 바인딩하여 렌더링해 줘.
+
+### [Phase 5: 향후 확장성(Write 기능) 스텁 준비]
+- 현재는 읽기 전용이지만, 추후 UI에서 폼을 열어 특정 양식의 행(Row)을 엑셀/CSV 파일에 추가(Append)할 수 있도록 데이터 모델에 고유 ID 체계를 부여하고, 수정/추가용 API Route 및 훅의 스텁(Stub) 자리를 마련해 둬.
+
+---
+
+[지시 사항]
+우선 첨부된 스티치 UI 코드를 구문 분석하는 것부터 시작해 줘. 컴포넌트 구조 파악이 끝나면 위 Phase에 맞춰 마일스톤 계획을 브리핑해 주고, 승인하면 Phase 1부터 자율 실행 및 로컬 브라우저 렌더링 테스트를 진행해 줘.

@@ -1,0 +1,157 @@
+import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import localforage from "localforage";
+import * as XLSX from "xlsx";
+import Papa from "papaparse";
+
+interface DriveFile {
+  id: string;
+  name: string;
+  modifiedTime: string;
+  mimeType: string;
+  size: string;
+}
+
+export interface CachedRow {
+  _id: string;
+  _fileId: string;
+  _fileName: string;
+  _folderId: string;
+  [key: string]: any;
+}
+
+export function useDriveSync(folderId?: string | null) {
+  const queryClient = useQueryClient();
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState("");
+
+  const cacheKey = `driveData_${folderId}`;
+  const metadataKey = `driveMetadata_${folderId}`;
+
+  // Fetch local cached data
+  const { data: cachedData = [], isLoading: isLoadingCache } = useQuery({
+    queryKey: [cacheKey],
+    queryFn: async () => {
+      if (!folderId) return [];
+      const data = await localforage.getItem<CachedRow[]>(cacheKey);
+      return data || [];
+    },
+    enabled: !!folderId,
+  });
+
+  // Sync mutation
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      if (!folderId) return;
+      setIsSyncing(true);
+      setSyncProgress("파일 목록 조회 중...");
+
+      try {
+        // 1. Fetch remote file metadata
+        const res = await fetch(`/api/drive/files?folderId=${folderId}`);
+        if (!res.ok) throw new Error("Failed to fetch file list");
+        const { files } = (await res.json()) as { files: DriveFile[] };
+
+        // 2. Fetch local metadata
+        const localMetadata = (await localforage.getItem<Record<string, string>>(metadataKey)) || {};
+        let currentData = (await localforage.getItem<CachedRow[]>(cacheKey)) || [];
+
+        const newMetadata: Record<string, string> = { ...localMetadata };
+        let hasChanges = false;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const localModified = localMetadata[file.id];
+
+          // If file is new or modified
+          if (!localModified || localModified !== file.modifiedTime) {
+            hasChanges = true;
+            setSyncProgress(`다운로드 중... (${i + 1}/${files.length}) ${file.name}`);
+
+            const dlRes = await fetch(`/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}`);
+            if (!dlRes.ok) {
+              console.error(`Failed to download ${file.name}`);
+              continue;
+            }
+
+            const buffer = await dlRes.arrayBuffer();
+            let rows: any[] = [];
+
+            if (file.mimeType === "text/csv" || file.mimeType === "application/vnd.google-apps.spreadsheet") {
+              const text = new TextDecoder().decode(buffer);
+              const result = Papa.parse(text, { header: true, skipEmptyLines: true });
+              rows = result.data;
+            } else {
+              // Excel file
+              const workbook = XLSX.read(buffer, { type: "array" });
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            }
+
+            // Remove old rows for this file
+            currentData = currentData.filter((row) => row._fileId !== file.id);
+
+            // Append new rows with metadata
+            const newRows: CachedRow[] = rows.map((row, index) => ({
+              ...row,
+              _id: `${file.id}_${index}_${Date.now()}`,
+              _fileId: file.id,
+              _fileName: file.name,
+              _folderId: folderId,
+            }));
+
+            currentData = [...currentData, ...newRows];
+            newMetadata[file.id] = file.modifiedTime;
+          }
+        }
+
+        // Clean up deleted files from local cache
+        const remoteIds = new Set(files.map((f) => f.id));
+        const deletedIds = Object.keys(newMetadata).filter((id) => !remoteIds.has(id));
+        if (deletedIds.length > 0) {
+          hasChanges = true;
+          deletedIds.forEach((id) => {
+            delete newMetadata[id];
+            currentData = currentData.filter((row) => row._fileId !== id);
+          });
+        }
+
+        // 3. Save if changes occurred
+        if (hasChanges) {
+          setSyncProgress("로컬 저장소 업데이트 중...");
+          await localforage.setItem(cacheKey, currentData);
+          await localforage.setItem(metadataKey, newMetadata);
+          await localforage.setItem(`lastSync_${folderId}`, new Date().toISOString());
+        }
+        
+      } finally {
+        setIsSyncing(false);
+        setSyncProgress("");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [cacheKey] });
+      queryClient.invalidateQueries({ queryKey: [`lastSync_${folderId}`] });
+    },
+  });
+
+  // Query for last sync time
+  const { data: lastSyncTime } = useQuery({
+    queryKey: [`lastSync_${folderId}`],
+    queryFn: async () => {
+      if (!folderId) return null;
+      return await localforage.getItem<string>(`lastSync_${folderId}`);
+    },
+    enabled: !!folderId,
+  });
+
+  return {
+    cachedData,
+    isLoadingCache,
+    isSyncing,
+    syncProgress,
+    lastSyncTime,
+    sync: () => syncMutation.mutate(),
+  };
+}
