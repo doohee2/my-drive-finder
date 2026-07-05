@@ -28,19 +28,15 @@ export function Header() {
       <header className="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full sticky top-0 z-50 bg-surface dark:bg-surface-dim shadow-sm">
         <div className="flex items-center gap-3">
           <img 
-            src="/icon-192x192.png" 
-            alt="My Drive Finder Logo" 
-            className="w-8 h-8 rounded-lg shadow-sm dark:hidden"
-          />
-          <img 
-            src="/icon-192x192-dark.png" 
-            alt="My Drive Finder Logo" 
-            className="w-8 h-8 rounded-lg shadow-sm hidden dark:block"
+            src={mounted && theme === "dark" ? "/icon-192x192-dark.png" : "/icon-192x192.png"} 
+            alt="Drive Finder Logo" 
+            className="w-8 h-8 rounded-lg shadow-sm transition-opacity duration-300"
           />
           <div className="flex items-center gap-1">
-            <span className="text-headline-md font-headline-md text-on-surface dark:text-inverse-on-surface">
-              Drive Finder
-            </span>
+            <svg viewBox="0 0 250 60" className="h-[26px] sm:h-[32px] w-auto drop-shadow-sm ml-1" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'var(--font-plus-jakarta-sans), sans-serif' }}>
+              <text x="0" y="45" fontWeight="800" fontSize="42" letterSpacing="-0.02em" className="fill-[#0058bd] dark:fill-[#ffffff] transition-colors duration-300">Drive</text>
+              <text x="110" y="45" fontWeight="700" fontSize="42" letterSpacing="-0.02em" className="fill-[#191b22] dark:fill-[#ffffff] transition-colors duration-300">Finder</text>
+            </svg>
             <button 
               onClick={() => setIsInfoOpen(true)}
               className="text-outline hover:text-primary transition-colors flex items-center justify-center p-1 rounded-full hover:bg-surface-variant"

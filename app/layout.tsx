@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/components/AuthProvider";
 import { QueryProvider } from "@/components/QueryProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-plus-jakarta-sans" });
 
 export const viewport: Viewport = {
   themeColor: "#0058bd",
@@ -34,7 +35,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={`${inter.variable} font-body-md min-h-screen flex flex-col antialiased`}>
+      <body className={`${inter.variable} ${plusJakartaSans.variable} font-body-md min-h-screen flex flex-col antialiased`}>
         <QueryProvider>
           <AuthProvider>
             <ThemeProvider
