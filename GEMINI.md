@@ -34,21 +34,23 @@
 - `app/api/drive/upload/route.ts`: (스텁) 향후 데이터 수정 및 쓰기 기능을 위한 빈 엔드포인트
 
 ### 📁 Frontend (Hooks & Components)
-- `hooks/useDriveSync.ts`: 핵심적인 **증분 동기화 로직** 및 **30초 쿨타임(Cooldown)**을 통한 구글 API Quota 보호 담당
+- `hooks/useDriveSync.ts`: 핵심적인 **증분 동기화 로직** 및 엑셀/구글 시트의 **다중 시트(Multi-sheet) 파싱**을 처리. API 할당량(Quota) 보호를 위한 30초 쿨타임(Cooldown) 로직 포함.
 - `hooks/useSearch.ts`: 로컬 캐시 데이터를 기반으로 한 **고속 텍스트 필터링 알고리즘** 담당
-- `components/FolderPickerModal.tsx`: 사용자가 구글 드라이브의 계층 구조를 탐색하며 동기화할 타겟 폴더를 선택하는 모달 UI
+- `components/FolderPickerModal.tsx`: 구글 드라이브 계층 구조 탐색 및 동기화할 타겟 폴더를 선택하는 모달 UI (직관적인 '선택' 버튼 배치 적용)
+- `components/FavoritesView.tsx`: 즐겨찾기로 등록된 폴더 목록과 각 폴더의 전체 캐시 용량 및 전체 경로(`fullPath`)를 관리 및 표출
 - `components/SearchBar.tsx`: 검색어 및 제외어 입력을 관리하는 상단 검색바
-- `components/SearchResults.tsx`: 필터링된 결과 데이터를 각 원본 파일별(`_fileId`)로 아코디언 형태로 그룹화하여 동적 테이블로 렌더링
+- `components/SearchResults.tsx`: 필터링된 데이터를 파일 및 시트(`_fileId + _sheetName`) 단위로 그룹화하여 렌더링. **검색어 하이라이팅**, **마우스 드래그 기반 컬럼 리사이즈**, **엑셀 스타일 격자선** 등 고급 데이터 그리드(Data Grid) UI 구현.
 - `components/Header.tsx`: 앱 로고, 동기화 상태 배지, 다크모드 토글, 앱 정보 모달, 구글 로그인/로그아웃 버튼을 포함한 글로벌 헤더
 
 ## 5. 최근 업데이트 및 주요 기능
+- **다중 시트(Multi-sheet) 지원**: 단일 시트만 가져오던 한계를 넘어, 엑셀(`.xlsx`) 파일은 물론 구글 스프레드시트의 모든 내부 워크시트를 개별적으로 파싱하여 검색 결과에 독립적으로 노출합니다.
+- **고급 데이터 그리드 UI**: 엑셀을 사용하는 것과 동일하게 마우스 드래그를 통해 **컬럼 폭을 자유자재로 조절(Resize)**할 수 있으며, 내용이 길면 자동으로 말줄임표 처리됩니다. 가독성을 높이는 옅은 격자선(Grid)도 추가되었습니다.
+- **검색어 하이라이팅**: 검색어와 정확히 일치하는 단어(키워드)를 표 내부에서 굵은 글씨와 브랜드 컬러로 즉시 강조(Highlight)하여 직관성을 높였습니다.
 - **계층형 폴더 탐색**: 플랫한 폴더 리스트 대신 빵판(Breadcrumbs)과 하위 폴더 진입을 지원하는 드릴다운(Drill-down) 방식의 폴더 선택기로 UX 개선
 - **안정적인 세션 유지 (Refresh Token)**: 구글 Access Token 만료 1분 전 자동으로 토큰을 갱신(Refresh)하여 장시간 사용 시에도 끊김 없는 동기화 지원
-- **API 할당량(Quota) 보호**: 30초의 동기화 쿨타임(Cooldown)을 도입하여 무분별한 API 연타로 인한 차단 예방
 - **초고속 실시간 검색 (Instant Search)**: 타이핑과 동시에 화면이 갱신되는 반응성 확보
 - **PWA 완벽 지원 & 앱 아이콘**: `manifest.ts` 및 전용 커스텀 앱 아이콘을 탑재하여 데스크탑/모바일 네이티브 앱처럼 설치 가능
-- **인앱 안내 모달**: 헤더의 'i' 아이콘을 통한 세련된 인앱 팝업 안내창 추가
 
 ## 6. 향후 유지보수 시 고려사항
-1. **대용량 렌더링 최적화 (Virtualization)**: 현재는 검색 결과를 한 번에 테이블로 렌더링합니다. 검색 결과가 수천~수만 건에 달할 경우 브라우저 DOM 렌더링 부하가 올 수 있으므로, 향후 `react-window`나 `react-virtuoso`를 활용한 테이블 가상화(Virtualization) 도입이 권장됩니다.
-2. **데이터 쓰기 (Phase 6)**: 향후 `SearchResults.tsx`의 [수정] 버튼을 활성화하여 구글 시트 원본 데이터를 조작하려면, `xlsx` 라이브러리의 엑셀 파일 재조립 및 Google Drive API `update` 메서드 구현이 필요합니다.
+1. **대용량 렌더링 최적화 (Virtualization)**: 현재는 검색 결과를 한 번에 테이블로 렌더링합니다. 검색 결과가 수천~수만 건에 달할 경우 브라우저 DOM 렌더링 부하가 올 수 있으므로, 향후 `react-window`나 `react-virtuoso`를 활용한 테이블 가상화(Virtualization) 도입이 권장됩니다. (컬럼 리사이즈 기능과 호환되도록 주의 필요)
+2. **데이터 수정 및 쓰기**: 현재 뷰어 및 검색용으로 최적화되어 불필요한 액션(수정) 버튼을 제거했습니다. 만약 엑셀 데이터를 앱 내에서 수정하고 드라이브로 재업로드(Write)하는 기능을 추후 부활시킨다면, `xlsx` 라이브러리의 파일 재조립 로직 및 Google Drive API `update` 메서드 연동이 필요합니다.
