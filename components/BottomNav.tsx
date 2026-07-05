@@ -7,7 +7,7 @@ interface BottomNavProps {
 
 export function BottomNav({ currentTab, onChangeTab }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 lg:hidden bg-surface dark:bg-surface-dim shadow-lg border-t border-outline-variant/10">
+    <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 lg:hidden bg-surface-container-lowest shadow-[0_-2px_10px_rgba(0,0,0,0.05)] dark:shadow-none border-t border-outline-variant/10 transition-colors duration-300">
       <button
         onClick={() => onChangeTab('search')}
         className={`flex flex-col items-center justify-center rounded-lg px-6 py-2 transition-colors ${

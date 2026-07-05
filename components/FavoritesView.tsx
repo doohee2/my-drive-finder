@@ -52,21 +52,37 @@ function FavoriteItem({
     }
   }, [cacheSize, folder.id, onSizeLoad]);
 
+  const pathParts = folder.fullPath 
+    ? folder.fullPath.split(' / ') 
+    : ['내 드라이브', folder.name];
+  const lastFolder = pathParts.pop();
+  const parentPath = pathParts.join(' / ');
+
   return (
     <li className="group">
       <div className="w-full flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-variant rounded-xl border border-outline-variant/20 transition-colors">
         <button
           onClick={onSelect}
-          className="flex-1 flex items-center gap-4 text-left"
+          className="flex-1 flex items-center gap-4 text-left min-w-0"
         >
           <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined">folder</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">
-              {folder.name}
-            </span>
-            <span className="text-label-sm text-on-surface-variant mt-0.5">
+          <div className="flex flex-col min-w-0 flex-1 pr-4">
+            <div className="flex min-w-0 items-center text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">
+              {parentPath && (
+                <>
+                  <div className="min-w-0 truncate text-outline-variant shrink">
+                    {parentPath}
+                  </div>
+                  <span className="text-outline-variant mx-1.5 shrink-0">/</span>
+                </>
+              )}
+              <div className="shrink-0 truncate max-w-[60%]">
+                {lastFolder}
+              </div>
+            </div>
+            <span className="text-[10px] md:text-[11px] text-on-surface-variant mt-0.5 shrink-0">
               {lastSyncTime ? `마지막 동기화: ${new Date(lastSyncTime).toLocaleString()} · 사용 용량: ${cacheSize !== undefined ? formatBytes(cacheSize) : '계산 중...'}` : "동기화 기록 없음"}
             </span>
           </div>

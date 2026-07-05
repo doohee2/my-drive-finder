@@ -9,19 +9,9 @@ export function SideNav({ currentTab, onChangeTab }: SideNavProps) {
   return (
     <nav className="h-screen w-64 hidden lg:flex flex-col bg-surface-container-low dark:bg-surface-container-low fixed left-0 top-0 pt-20 z-40 border-r border-outline-variant/30">
       <div className="p-6">
-        <div className="text-label-sm font-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">
-          파일 관리
-        </div>
-        <div className="text-headline-md font-headline-md text-primary dark:text-inverse-primary mb-6">
+        <div className="text-headline-md font-headline-md text-primary dark:text-inverse-primary mb-8 mt-2 px-2">
           마이 드라이브 파인더
         </div>
-        <button 
-          onClick={() => onChangeTab('search')}
-          className="w-full flex items-center justify-center gap-2 bg-primary text-on-primary font-label-md text-label-md py-3 px-4 rounded-lg hover:opacity-90 transition-opacity mb-8 shadow-sm"
-        >
-          <span className="material-symbols-outlined text-lg">add</span>
-          새 검색
-        </button>
       </div>
       <ul className="flex flex-col gap-1 px-4">
         <li>

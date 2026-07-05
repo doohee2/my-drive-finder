@@ -4,6 +4,7 @@ import localforage from "localforage";
 export interface FavoriteFolder {
   id: string;
   name: string;
+  fullPath?: string;
 }
 
 const FAVORITES_KEY = "driveFavorites";

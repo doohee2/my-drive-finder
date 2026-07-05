@@ -25,8 +25,9 @@ export function Header() {
 
   return (
     <>
-      <header className="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full sticky top-0 z-50 bg-surface dark:bg-surface-dim shadow-sm">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-50 w-full bg-surface-container-lowest border-b border-outline-variant/10 shadow-sm transition-colors duration-300">
+        <div className="flex h-12 md:h-16 items-center px-2 md:px-6 w-full max-w-[1440px] mx-auto gap-1.5 md:gap-2">
+        <div className="flex items-center gap-2 md:gap-3">
           <img
             src={mounted && theme === "dark" ? "/icon-192x192-dark.png" : "/icon-192x192.png"}
             alt="Drive Finder Logo"
@@ -110,7 +111,8 @@ export function Header() {
             </button>
           )}
         </div>
-      </header>
+      </div>
+    </header>
 
       {/* Info Modal */}
       {isInfoOpen && (

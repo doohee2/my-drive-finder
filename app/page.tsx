@@ -15,7 +15,7 @@ import { useSearch } from "@/hooks/useSearch";
 
 export default function Home() {
   const [selectedFolder, setSelectedFolder] = useSelectedFolder();
-  const { cachedData } = useDriveSync(selectedFolder?.id);
+  const { cachedData, lastSyncTime } = useDriveSync(selectedFolder?.id);
 
   const [query, setQuery] = useState("");
   const [excludeQuery, setExcludeQuery] = useState("");
@@ -34,9 +34,9 @@ export default function Home() {
       <Header />
       <div className="flex flex-1 overflow-hidden relative">
         <SideNav currentTab={currentTab} onChangeTab={setCurrentTab} />
-        <main className="flex-1 lg:ml-64 p-margin-mobile md:p-margin-desktop overflow-y-auto w-full max-w-container-max mx-auto pb-24 lg:pb-margin-desktop">
+        <main className="flex-1 lg:ml-64 p-2 sm:p-3 md:p-margin-desktop overflow-y-auto w-full max-w-container-max mx-auto pb-24 lg:pb-margin-desktop">
           {currentTab === 'search' ? (
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className="max-w-4xl mx-auto space-y-2 sm:space-y-3 md:space-y-6">
               <FolderSettingsCard />
               <SearchBar 
                 query={query} 
@@ -49,7 +49,7 @@ export default function Home() {
               {query.trim() === "" ? (
                 <EmptyState />
               ) : (
-                <SearchResults results={results} query={query} />
+                <SearchResults results={results} query={query} lastSyncTime={lastSyncTime} />
               )}
             </div>
           ) : (

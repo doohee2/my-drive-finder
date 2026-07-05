@@ -17,6 +17,7 @@ export interface CachedRow {
   _fileId: string;
   _fileName: string;
   _folderId: string;
+  _sheetName?: string;
   [key: string]: any;
 }
 
@@ -89,16 +90,18 @@ export function useDriveSync(folderId?: string | null) {
             const buffer = await dlRes.arrayBuffer();
             let rows: any[] = [];
 
-            if (file.mimeType === "text/csv" || file.mimeType === "application/vnd.google-apps.spreadsheet") {
+            if (file.mimeType === "text/csv") {
               const text = new TextDecoder().decode(buffer);
               const result = Papa.parse(text, { header: true, skipEmptyLines: true });
-              rows = result.data;
+              rows = result.data.map((r: any) => ({ ...r, _sheetName: "CSV" }));
             } else {
-              // Excel file
+              // Excel file or Google Sheet exported as Excel
               const workbook = XLSX.read(buffer, { type: "array" });
-              const firstSheetName = workbook.SheetNames[0];
-              const worksheet = workbook.Sheets[firstSheetName];
-              rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+              for (const sheetName of workbook.SheetNames) {
+                const worksheet = workbook.Sheets[sheetName];
+                const sheetRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                rows.push(...sheetRows.map((r: any) => ({ ...r, _sheetName: sheetName })));
+              }
             }
 
             // Remove old rows for this file

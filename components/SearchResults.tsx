@@ -6,18 +6,28 @@ import { useMemo, useState } from "react";
 interface SearchResultsProps {
   results: CachedRow[];
   query: string;
+  lastSyncTime?: number | null;
 }
 
-export function SearchResults({ results, query }: SearchResultsProps) {
+export function SearchResults({ results, query, lastSyncTime }: SearchResultsProps) {
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
 
   const grouped = useMemo(() => {
-    const map = new Map<string, { fileId: string; fileName: string; folderId: string; rows: CachedRow[] }>();
+    const map = new Map<string, { fileId: string; sheetName: string; fileName: string; folderId: string; rows: CachedRow[] }>();
     for (const row of results) {
-      if (!map.has(row._fileId)) {
-        map.set(row._fileId, { fileId: row._fileId, fileName: row._fileName, folderId: row._folderId, rows: [] });
+      const sheetName = row._sheetName || '';
+      const groupKey = `${row._fileId}_${sheetName}`;
+      if (!map.has(groupKey)) {
+        const displayFileName = sheetName && sheetName !== 'CSV' ? `${row._fileName} (${sheetName})` : row._fileName;
+        map.set(groupKey, { 
+          fileId: groupKey, 
+          sheetName: sheetName,
+          fileName: displayFileName, 
+          folderId: row._folderId, 
+          rows: [] 
+        });
       }
-      map.get(row._fileId)!.rows.push(row);
+      map.get(groupKey)!.rows.push(row);
     }
     return Array.from(map.values());
   }, [results]);
@@ -32,13 +42,18 @@ export function SearchResults({ results, query }: SearchResultsProps) {
   if (results.length === 0) return null;
 
   return (
-    <div className="mt-8 space-y-4">
-      <div className="flex justify-between items-end">
-        <h3 className="text-headline-md font-headline-md text-on-surface">
-          검색 결과
+    <div className="mt-3 md:mt-4 space-y-3 md:space-y-4">
+      <div className="flex flex-row justify-between items-end gap-2 w-full overflow-hidden">
+        <h3 className="text-body-lg sm:text-headline-md font-headline-md text-on-surface flex flex-wrap sm:flex-nowrap items-baseline gap-1 sm:gap-2 min-w-0 truncate">
+          <span className="shrink-0">검색 결과</span>
+          {lastSyncTime && (
+            <span className="text-[10px] sm:text-[11px] md:text-body-sm font-normal text-on-surface-variant truncate">
+              (마지막 동기화: {new Date(lastSyncTime).toLocaleString()})
+            </span>
+          )}
         </h3>
-        <span className="text-label-sm font-label-sm text-on-surface-variant">
-          {results.length}개의 일치하는 항목
+        <span className="text-[11px] sm:text-label-sm font-label-sm text-on-surface-variant shrink-0 mb-0.5 sm:mb-0">
+          {results.length}개 일치
         </span>
       </div>
 
@@ -51,27 +66,27 @@ export function SearchResults({ results, query }: SearchResultsProps) {
           : [];
 
         return (
-          <div key={group.fileId} className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden mb-4">
+          <div key={group.fileId} className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden mb-3 md:mb-4">
             {/* Group Header */}
             <div 
               onClick={() => toggleExpand(group.fileId)}
-              className="bg-surface-container-low px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center cursor-pointer hover:bg-surface-container-highest transition-colors"
+              className="bg-surface-container-low px-4 py-2.5 md:px-5 md:py-3 border-b border-outline-variant/30 flex justify-between items-center cursor-pointer hover:bg-surface-container-highest transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-secondary icon-fill">
-                  {group.fileName.endsWith('.csv') ? 'data_table' : 'description'}
+              <div className="flex items-center gap-2 md:gap-3 min-w-0 pr-3">
+                <span className="material-symbols-outlined text-[20px] text-secondary icon-fill shrink-0">
+                  {group.fileName.endsWith('.csv') || group.sheetName === 'CSV' ? 'data_table' : 'description'}
                 </span>
-                <div>
-                  <h4 className="text-body-md font-body-md font-medium text-on-surface">
+                <div className="min-w-0 truncate">
+                  <h4 className="text-body-sm md:text-body-md font-medium text-on-surface truncate">
                     {group.fileName}
                   </h4>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="bg-secondary-container/30 text-secondary font-label-sm text-label-sm px-2.5 py-1 rounded-full">
-                  {group.rows.length}개 항목
+              <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                <span className="bg-secondary-container/30 text-secondary text-[11px] md:text-label-sm font-medium px-2 py-0.5 md:px-2.5 md:py-1 rounded-full">
+                  {group.rows.length}개
                 </span>
-                <span className={`material-symbols-outlined text-outline transition-transform duration-200 ${isExpanded ? '' : 'rotate-180'}`}>
+                <span className={`material-symbols-outlined text-[20px] text-outline transition-transform duration-200 ${isExpanded ? '' : 'rotate-180'}`}>
                   expand_less
                 </span>
               </div>
@@ -84,30 +99,20 @@ export function SearchResults({ results, query }: SearchResultsProps) {
                 <div className="w-full overflow-x-auto max-h-[500px] overflow-y-auto">
                   <table className="w-full text-left border-collapse">
                     <thead className="sticky top-0 z-10 bg-surface-bright">
-                      <tr className="text-label-sm font-label-sm text-on-surface-variant border-b border-outline-variant/30 uppercase tracking-wider">
+                      <tr className="text-label-sm font-label-sm text-on-surface-variant border-b border-outline-variant/30 uppercase tracking-wider bg-surface-container-low">
                         {columns.map(col => (
-                          <th key={col} className="px-6 py-3 font-medium whitespace-nowrap">{col}</th>
+                          <th key={col} className="px-4 py-2.5 font-medium whitespace-nowrap">{col}</th>
                         ))}
-                        <th className="px-6 py-3 font-medium whitespace-nowrap text-right">액션</th>
                       </tr>
                     </thead>
-                    <tbody className="text-body-sm font-body-sm">
+                    <tbody className="text-[13px] leading-tight">
                       {group.rows.map((row) => (
                         <tr key={row._id} className="border-b border-outline-variant/20 hover:bg-surface-container/30 transition-colors">
                           {columns.map(col => (
-                            <td key={col} className="px-6 py-4 text-on-surface whitespace-nowrap">
+                            <td key={col} className="px-4 py-2 text-on-surface whitespace-nowrap">
                               {row[col]}
                             </td>
                           ))}
-                          <td className="px-6 py-4 text-right">
-                            <button 
-                              onClick={() => alert("데이터 수정 및 쓰기 기능은 향후 업데이트에 추가될 예정입니다.")}
-                              className="text-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors"
-                              title="수정 (준비 중)"
-                            >
-                              <span className="material-symbols-outlined text-sm">edit</span>
-                            </button>
-                          </td>
                         </tr>
                       ))}
                     </tbody>

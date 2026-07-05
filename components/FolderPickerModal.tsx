@@ -7,6 +7,7 @@ interface Folder {
   id: string;
   name: string;
   path?: string;
+  fullPath?: string;
   parentId: string;
 }
 
@@ -112,7 +113,8 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
               {currentParentId !== 'root' && (
                 <button
                   onClick={() => {
-                    onSelectFolder({ id: currentParentId, name: pathStack[pathStack.length - 1].name, parentId: pathStack.length > 1 ? pathStack[pathStack.length - 2].id : 'root' });
+                    const fullPath = pathStack.map(p => p.name).join(' / ');
+                    onSelectFolder({ id: currentParentId, name: pathStack[pathStack.length - 1].name, parentId: pathStack.length > 1 ? pathStack[pathStack.length - 2].id : 'root', fullPath });
                     onClose();
                   }}
                   className="mt-4 px-4 py-2 bg-primary text-on-primary rounded-lg text-label-md font-medium hover:bg-primary/90 transition-colors"
@@ -127,7 +129,7 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
                 <li className="mb-4">
                   <button
                     onClick={() => {
-                      onSelectFolder({ id: 'root', name: '내 드라이브', parentId: 'root' });
+                      onSelectFolder({ id: 'root', name: '내 드라이브', parentId: 'root', fullPath: '내 드라이브' });
                       onClose();
                     }}
                     className="w-full flex items-center justify-between p-3 bg-primary-container/20 border border-primary/30 rounded-lg hover:bg-primary-container/40 transition-colors"
@@ -143,6 +145,7 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
               {currentLevelFolders.map((folder) => {
                 // Check if this folder has children to show a visual hint
                 const hasChildren = folders.some(f => f.parentId === folder.id);
+                const fullPath = [...pathStack.map(p => p.name), folder.name].join(' / ');
                 
                 return (
                   <li key={folder.id} className="flex items-center gap-2 group">
@@ -163,7 +166,7 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onSelectFolder(folder);
+                        onSelectFolder({ ...folder, fullPath });
                         onClose();
                       }}
                       className="shrink-0 flex items-center justify-center bg-secondary-container hover:bg-secondary text-on-secondary-container hover:text-on-secondary px-4 py-3 rounded-lg border border-outline-variant/30 transition-colors"

@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     // Google Sheets need to be exported
     if (mimeType === "application/vnd.google-apps.spreadsheet") {
       const response = await drive.files.export(
-        { fileId, mimeType: "text/csv" },
+        { fileId, mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
         { responseType: "stream" }
       );
       stream = response.data;
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     }
 
     const headers = new Headers();
-    if (mimeType === "application/vnd.google-apps.spreadsheet" || mimeType === "text/csv") {
+    if (mimeType === "text/csv") {
         headers.set('Content-Type', 'text/csv');
     } else {
         headers.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

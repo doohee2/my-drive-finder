@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 export interface Folder {
   id: string;
   name: string;
+  fullPath?: string;
 }
 
 export function useSelectedFolder() {
