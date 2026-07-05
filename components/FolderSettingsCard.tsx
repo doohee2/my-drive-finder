@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { FolderPickerModal } from "./FolderPickerModal";
 import { useSelectedFolder } from "@/hooks/useSelectedFolder";
+import { useFavorites } from "@/hooks/useFavorites";
 
 export function FolderSettingsCard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useSelectedFolder();
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   return (
     <>
@@ -22,6 +24,17 @@ export function FolderSettingsCard() {
               </span>
               내 드라이브 <span className="text-outline-variant mx-1">/</span>{" "}
               {selectedFolder ? selectedFolder.name : "폴더를 선택하세요"}
+              {selectedFolder && (
+                <button
+                  onClick={() => toggleFavorite({ id: selectedFolder.id, name: selectedFolder.name })}
+                  className="ml-1 text-primary hover:text-primary-container p-1 rounded-full hover:bg-surface-variant/50 transition-colors flex items-center justify-center"
+                  title={isFavorite(selectedFolder.id) ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+                >
+                  <span className={`material-symbols-outlined ${isFavorite(selectedFolder.id) ? 'icon-fill' : ''}`}>
+                    star
+                  </span>
+                </button>
+              )}
             </div>
             <div className="flex gap-2">
               <span className="bg-surface-container text-on-surface text-label-sm font-label-sm px-2.5 py-1 rounded-md border border-outline-variant/50">

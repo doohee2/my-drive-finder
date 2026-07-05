@@ -8,45 +8,56 @@ import { FolderSettingsCard } from "@/components/FolderSettingsCard";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchResults } from "@/components/SearchResults";
 import { EmptyState } from "@/components/EmptyState";
+import { FavoritesView } from "@/components/FavoritesView";
 import { useSelectedFolder } from "@/hooks/useSelectedFolder";
 import { useDriveSync } from "@/hooks/useDriveSync";
 import { useSearch } from "@/hooks/useSearch";
 
 export default function Home() {
-  const [selectedFolder] = useSelectedFolder();
+  const [selectedFolder, setSelectedFolder] = useSelectedFolder();
   const { cachedData } = useDriveSync(selectedFolder?.id);
 
   const [query, setQuery] = useState("");
   const [excludeQuery, setExcludeQuery] = useState("");
   const [excludeEnabled, setExcludeEnabled] = useState(false);
+  const [currentTab, setCurrentTab] = useState<'search' | 'favorites'>('search');
 
   const results = useSearch(cachedData, query, excludeQuery, excludeEnabled);
+
+  const handleSelectFavorite = (folder: { id: string; name: string }) => {
+    setSelectedFolder(folder);
+    setCurrentTab('search');
+  };
 
   return (
     <>
       <Header />
       <div className="flex flex-1 overflow-hidden relative">
-        <SideNav />
+        <SideNav currentTab={currentTab} onChangeTab={setCurrentTab} />
         <main className="flex-1 lg:ml-64 p-margin-mobile md:p-margin-desktop overflow-y-auto w-full max-w-container-max mx-auto pb-24 lg:pb-margin-desktop">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <FolderSettingsCard />
-            <SearchBar 
-              query={query} 
-              setQuery={setQuery} 
-              excludeQuery={excludeQuery} 
-              setExcludeQuery={setExcludeQuery} 
-              excludeEnabled={excludeEnabled} 
-              setExcludeEnabled={setExcludeEnabled} 
-            />
-            {query.trim() === "" ? (
-              <EmptyState />
-            ) : (
-              <SearchResults results={results} query={query} />
-            )}
-          </div>
+          {currentTab === 'search' ? (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <FolderSettingsCard />
+              <SearchBar 
+                query={query} 
+                setQuery={setQuery} 
+                excludeQuery={excludeQuery} 
+                setExcludeQuery={setExcludeQuery} 
+                excludeEnabled={excludeEnabled} 
+                setExcludeEnabled={setExcludeEnabled} 
+              />
+              {query.trim() === "" ? (
+                <EmptyState />
+              ) : (
+                <SearchResults results={results} query={query} />
+              )}
+            </div>
+          ) : (
+            <FavoritesView onSelectFolder={handleSelectFavorite} />
+          )}
         </main>
       </div>
-      <BottomNav />
+      <BottomNav currentTab={currentTab} onChangeTab={setCurrentTab} />
     </>
   );
 }
