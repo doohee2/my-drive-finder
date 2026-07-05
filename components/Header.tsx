@@ -34,8 +34,8 @@ export function Header() {
           />
           <div className="flex items-center gap-1">
             <svg viewBox="0 0 250 60" className="h-[26px] sm:h-[32px] w-auto drop-shadow-sm ml-1" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'var(--font-plus-jakarta-sans), sans-serif' }}>
-              <text x="0" y="45" fontWeight="800" fontSize="42" letterSpacing="-0.02em" className="fill-[#0058bd] dark:fill-[#ffffff] transition-colors duration-300">Drive</text>
-              <text x="110" y="45" fontWeight="700" fontSize="42" letterSpacing="-0.02em" className="fill-[#191b22] dark:fill-[#ffffff] transition-colors duration-300">Finder</text>
+              <text x="0" y="45" fontWeight="800" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#0058bd'} className="transition-colors duration-300">Drive</text>
+              <text x="110" y="45" fontWeight="700" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#191b22'} className="transition-colors duration-300">Finder</text>
             </svg>
             <button 
               onClick={() => setIsInfoOpen(true)}
