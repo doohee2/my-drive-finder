@@ -10,6 +10,7 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
   
   const [selectedFolder] = useSelectedFolder();
   const { isSyncing, syncProgress, lastSyncTime, sync } = useDriveSync(selectedFolder?.id);
@@ -23,15 +24,27 @@ export function Header() {
   };
 
   return (
-    <header className="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full sticky top-0 z-50 bg-surface dark:bg-surface-dim shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="material-symbols-outlined text-primary text-2xl icon-fill">
-          cloud_sync
-        </span>
-        <span className="text-headline-md font-headline-md text-on-surface dark:text-inverse-on-surface">
-          My Drive Finder
-        </span>
-      </div>
+    <>
+      <header className="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full sticky top-0 z-50 bg-surface dark:bg-surface-dim shadow-sm">
+        <div className="flex items-center gap-3">
+          <img 
+            src="/icon-192x192.png" 
+            alt="My Drive Finder Logo" 
+            className="w-8 h-8 rounded-lg shadow-sm"
+          />
+          <div className="flex items-center gap-1">
+            <span className="text-headline-md font-headline-md text-on-surface dark:text-inverse-on-surface">
+              My Drive Finder
+            </span>
+            <button 
+              onClick={() => setIsInfoOpen(true)}
+              className="text-outline hover:text-primary transition-colors flex items-center justify-center p-1 rounded-full hover:bg-surface-variant"
+              aria-label="앱 정보"
+            >
+              <span className="material-symbols-outlined text-[20px]">info</span>
+            </button>
+          </div>
+        </div>
       <div className="flex items-center gap-4">
         {selectedFolder && (
           <div className="hidden md:flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant bg-surface-container-highest px-3 py-1.5 rounded-full">
@@ -95,6 +108,35 @@ export function Header() {
           </button>
         )}
       </div>
-    </header>
+      </header>
+
+      {/* Info Modal */}
+      {isInfoOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsInfoOpen(false)}>
+          <div className="bg-surface dark:bg-surface-dim w-full max-w-sm rounded-2xl shadow-xl p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">info</span>
+                안내
+              </h3>
+              <button onClick={() => setIsInfoOpen(false)} className="text-on-surface-variant hover:text-on-surface">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <p className="text-body-md font-body-md text-on-surface-variant leading-relaxed">
+              My Drive Finder 페이지는 구글 드라이브의 특정 폴더를 지정해서 해당 폴더의 csv, xlsx 파일의 내용을 검색하는 반응형 웹 기반 앱입니다. 현재 테스트 계정으로 등록된 사용자만 이용할 수 있습니다.
+            </p>
+            <div className="mt-6 flex justify-end">
+              <button 
+                onClick={() => setIsInfoOpen(false)}
+                className="bg-primary hover:bg-primary/90 text-on-primary px-4 py-2 rounded-lg text-label-md font-medium transition-colors"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

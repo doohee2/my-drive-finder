@@ -43,6 +43,18 @@ export function useDriveSync(folderId?: string | null) {
   const syncMutation = useMutation({
     mutationFn: async () => {
       if (!folderId) return;
+
+      // Cooldown check
+      const lastSyncStr = await localforage.getItem<string>(`lastSync_${folderId}`);
+      if (lastSyncStr) {
+        const lastSyncDate = new Date(lastSyncStr);
+        const diffSeconds = (Date.now() - lastSyncDate.getTime()) / 1000;
+        if (diffSeconds < 30) {
+          alert(`동기화는 30초마다 가능합니다. 잠시 후 다시 시도해 주세요. (${Math.ceil(30 - diffSeconds)}초 남음)`);
+          return;
+        }
+      }
+
       setIsSyncing(true);
       setSyncProgress("파일 목록 조회 중...");
 

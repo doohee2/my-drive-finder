@@ -51,7 +51,8 @@ export async function GET() {
       return {
         id: folder.id,
         name: folder.name,
-        path: pathNames.join(" / ")
+        path: pathNames.join(" / "),
+        parentId: folderMap.has(folder.parents?.[0] || "") ? folder.parents![0] : "root",
       };
     });
 
