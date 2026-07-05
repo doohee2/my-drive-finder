@@ -6,7 +6,7 @@ import { useMemo, useState, useRef } from "react";
 interface SearchResultsProps {
   results: CachedRow[];
   query: string;
-  lastSyncTime?: number | null;
+  lastSyncTime?: string | number | null;
 }
 
 const HighlightedText = ({ text, query }: { text: string; query: string }) => {
