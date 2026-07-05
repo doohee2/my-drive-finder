@@ -80,8 +80,8 @@ export function SearchResults({ results, query }: SearchResultsProps) {
             {/* Data Area */}
             {isExpanded && (
               <div className="w-full">
-                {/* Desktop Table View */}
-                <div className="hidden md:block w-full overflow-x-auto max-h-[500px] overflow-y-auto">
+                {/* Table View (Responsive with horizontal scrolling) */}
+                <div className="w-full overflow-x-auto max-h-[500px] overflow-y-auto">
                   <table className="w-full text-left border-collapse">
                     <thead className="sticky top-0 z-10 bg-surface-bright">
                       <tr className="text-label-sm font-label-sm text-on-surface-variant border-b border-outline-variant/30 uppercase tracking-wider">
@@ -112,31 +112,6 @@ export function SearchResults({ results, query }: SearchResultsProps) {
                       ))}
                     </tbody>
                   </table>
-                </div>
-
-                {/* Mobile Card View */}
-                <div className="block md:hidden p-4 space-y-3">
-                  {group.rows.map((row) => (
-                    <div key={row._id} className="bg-surface-container rounded-lg p-4 shadow-sm border border-outline-variant/10">
-                      <div className="flex flex-col gap-2">
-                        {columns.map(col => (
-                          <div key={col} className="flex flex-col">
-                            <span className="text-label-sm text-on-surface-variant">{col}</span>
-                            <span className="text-body-md font-medium text-on-surface">{row[col]}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-outline-variant/10 flex justify-end">
-                        <button 
-                          onClick={() => alert("데이터 수정 및 쓰기 기능은 향후 업데이트에 추가될 예정입니다.")}
-                          className="flex items-center gap-1 text-primary text-label-sm font-medium hover:bg-primary-container/20 px-3 py-1.5 rounded-lg transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-sm">edit</span>
-                          수정
-                        </button>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}

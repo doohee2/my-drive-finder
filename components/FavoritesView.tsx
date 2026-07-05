@@ -6,6 +6,54 @@ interface FavoritesViewProps {
   onSelectFolder: (folder: { id: string; name: string }) => void;
 }
 
+import { useQuery } from "@tanstack/react-query";
+import localforage from "localforage";
+
+function FavoriteItem({ 
+  folder, 
+  onSelect, 
+  onRemove 
+}: { 
+  folder: { id: string; name: string }; 
+  onSelect: () => void; 
+  onRemove: () => void; 
+}) {
+  const { data: lastSyncTime } = useQuery({
+    queryKey: [`lastSync_${folder.id}`],
+    queryFn: async () => await localforage.getItem<string>(`lastSync_${folder.id}`),
+  });
+
+  return (
+    <li className="group">
+      <div className="w-full flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-variant rounded-xl border border-outline-variant/20 transition-colors">
+        <button
+          onClick={onSelect}
+          className="flex-1 flex items-center gap-4 text-left"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined">folder</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">
+              {folder.name}
+            </span>
+            <span className="text-label-sm text-on-surface-variant mt-0.5">
+              {lastSyncTime ? `마지막 동기화: ${new Date(lastSyncTime).toLocaleString()}` : "동기화 기록 없음"}
+            </span>
+          </div>
+        </button>
+        <button
+          onClick={onRemove}
+          className="shrink-0 p-2 text-on-surface-variant hover:text-error hover:bg-error-container/30 rounded-full transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100"
+          title="즐겨찾기에서 제거"
+        >
+          <span className="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </li>
+  );
+}
+
 export function FavoritesView({ onSelectFolder }: FavoritesViewProps) {
   const { favorites, removeFavorite, isLoaded } = useFavorites();
 
@@ -35,30 +83,12 @@ export function FavoritesView({ onSelectFolder }: FavoritesViewProps) {
         ) : (
           <ul className="space-y-3">
             {favorites.map((folder) => (
-              <li key={folder.id} className="group">
-                <div className="w-full flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-variant rounded-xl border border-outline-variant/20 transition-colors">
-                  <button
-                    onClick={() => onSelectFolder(folder)}
-                    className="flex-1 flex items-center gap-4 text-left"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined">folder</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">
-                        {folder.name}
-                      </span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => removeFavorite(folder.id)}
-                    className="shrink-0 p-2 text-on-surface-variant hover:text-error hover:bg-error-container/30 rounded-full transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100"
-                    title="즐겨찾기에서 제거"
-                  >
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
-                </div>
-              </li>
+              <FavoriteItem 
+                key={folder.id} 
+                folder={folder} 
+                onSelect={() => onSelectFolder(folder)} 
+                onRemove={() => removeFavorite(folder.id)} 
+              />
             ))}
           </ul>
         )}
