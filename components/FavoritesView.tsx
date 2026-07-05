@@ -3,7 +3,7 @@
 import { useFavorites } from "@/hooks/useFavorites";
 
 interface FavoritesViewProps {
-  onSelectFolder: (folder: { id: string; name: string }) => void;
+  onSelectFolder: (folder: { id: string; name: string; fullPath?: string }) => void;
 }
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +22,7 @@ function FavoriteItem({
   onRemove,
   onSizeLoad
 }: { 
-  folder: { id: string; name: string }; 
+  folder: { id: string; name: string; fullPath?: string }; 
   onSelect: () => void; 
   onRemove: () => void;
   onSizeLoad: (id: string, size: number) => void;
