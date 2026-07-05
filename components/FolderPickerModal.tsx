@@ -31,6 +31,17 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
       fetchFolders();
       setPathStack([{ id: 'root', name: '내 드라이브' }]); // reset on open
     }
+    
+    // Lock body scroll when modal is open
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen, session]);
 
   const fetchFolders = async () => {
@@ -76,7 +87,7 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
         </div>
         
         {/* Breadcrumbs */}
-        {!loading && !error && session && (
+        {!loading && !error && session && pathStack.length > 1 && (
           <div className="px-4 py-3 bg-surface-container-lowest border-b border-outline-variant/30 flex flex-wrap items-center gap-1 overflow-x-auto no-scrollbar">
             {pathStack.map((step, idx) => (
               <div key={step.id} className="flex items-center shrink-0">
@@ -124,7 +135,7 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
               )}
             </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-2 pb-4">
               {currentLevelFolders.map((folder) => {
                 // Check if this folder has children to show a visual hint
                 const hasChildren = folders.some(f => f.parentId === folder.id);

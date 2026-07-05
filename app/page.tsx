@@ -12,6 +12,7 @@ import { FavoritesView } from "@/components/FavoritesView";
 import { useSelectedFolder } from "@/hooks/useSelectedFolder";
 import { useDriveSync } from "@/hooks/useDriveSync";
 import { useSearch } from "@/hooks/useSearch";
+import { APP_CONFIG } from "@/lib/config";
 
 export default function Home() {
   const [selectedFolder, setSelectedFolder] = useSelectedFolder();
@@ -51,6 +52,11 @@ export default function Home() {
               ) : (
                 <SearchResults results={results} query={query} lastSyncTime={lastSyncTime} />
               )}
+              
+              {/* Footer Information */}
+              <div className="text-center text-[12px] text-on-surface-variant/70 pt-8 pb-4">
+                {APP_CONFIG.lastModifiedText}
+              </div>
             </div>
           ) : (
             <FavoritesView onSelectFolder={handleSelectFavorite} />
