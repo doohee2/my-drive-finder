@@ -1,7 +1,7 @@
 "use client";
 
 import { CachedRow } from "@/hooks/useDriveSync";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 
 interface SearchResultsProps {
   results: CachedRow[];
@@ -9,8 +9,60 @@ interface SearchResultsProps {
   lastSyncTime?: number | null;
 }
 
+const HighlightedText = ({ text, query }: { text: string; query: string }) => {
+  if (!query.trim() || !text) return <>{text}</>;
+  
+  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return <>{text}</>;
+
+  const escapedTokens = tokens.map(t => t.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+  const regex = new RegExp(`(${escapedTokens.join('|')})`, 'gi');
+  
+  const parts = String(text).split(regex);
+  
+  return (
+    <>
+      {parts.map((part, i) => {
+        const isMatch = tokens.some(t => t === part.toLowerCase());
+        return isMatch ? (
+          <span key={i} className="font-bold text-primary dark:text-inverse-primary bg-primary/10 px-0.5 rounded-sm">
+            {part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        );
+      })}
+    </>
+  );
+};
+
 export function SearchResults({ results, query, lastSyncTime }: SearchResultsProps) {
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [colWidths, setColWidths] = useState<Record<string, number>>({});
+  const resizingCol = useRef<{ key: string, startX: number, startWidth: number } | null>(null);
+
+  const startResize = (e: React.MouseEvent, colKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const currentWidth = colWidths[colKey] || 150;
+    resizingCol.current = { key: colKey, startX: e.pageX, startWidth: currentWidth };
+    
+    const handleMouseMove = (moveEvent: globalThis.MouseEvent) => {
+      if (!resizingCol.current) return;
+      const diff = moveEvent.pageX - resizingCol.current.startX;
+      const newWidth = Math.max(50, resizingCol.current.startWidth + diff);
+      setColWidths(prev => ({ ...prev, [resizingCol.current!.key]: newWidth }));
+    };
+    
+    const handleMouseUp = () => {
+      resizingCol.current = null;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   const grouped = useMemo(() => {
     const map = new Map<string, { fileId: string; sheetName: string; fileName: string; folderId: string; rows: CachedRow[] }>();
@@ -97,22 +149,50 @@ export function SearchResults({ results, query, lastSyncTime }: SearchResultsPro
               <div className="w-full">
                 {/* Table View (Responsive with horizontal scrolling) */}
                 <div className="w-full overflow-x-auto max-h-[500px] overflow-y-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 z-10 bg-surface-bright">
-                      <tr className="text-label-sm font-label-sm text-on-surface-variant border-b border-outline-variant/30 uppercase tracking-wider bg-surface-container-low">
-                        {columns.map(col => (
-                          <th key={col} className="px-4 py-2.5 font-medium whitespace-nowrap">{col}</th>
-                        ))}
+                  <table className="text-left border-collapse table-fixed bg-surface-lowest">
+                    <thead className="sticky top-0 z-10 shadow-[0_1px_0_rgba(0,0,0,0.1)]">
+                      <tr className="uppercase tracking-wider bg-surface-container-low border-b border-outline-variant/30">
+                        {columns.map(col => {
+                          const colKey = `${group.fileId}_${col}`;
+                          const width = colWidths[colKey] || 150;
+                          return (
+                            <th 
+                              key={col} 
+                              className="relative p-0 font-medium whitespace-nowrap border-r border-outline-variant/30 group bg-surface-container-low select-none"
+                              style={{ width, minWidth: width, maxWidth: width }}
+                            >
+                              <div className="px-3 py-2 truncate text-[13px] text-on-surface-variant text-left w-full">
+                                {col}
+                              </div>
+                              <div 
+                                onMouseDown={(e) => startResize(e, colKey)}
+                                className="absolute right-0 top-0 w-[6px] h-full cursor-col-resize bg-outline-variant/30 hover:bg-primary/60 transition-colors z-20 flex items-center justify-center opacity-70 hover:opacity-100"
+                              />
+                            </th>
+                          );
+                        })}
+                        <th className="w-full bg-surface-container-low border-b border-outline-variant/30"></th>
                       </tr>
                     </thead>
                     <tbody className="text-[13px] leading-tight">
                       {group.rows.map((row) => (
-                        <tr key={row._id} className="border-b border-outline-variant/20 hover:bg-surface-container/30 transition-colors">
-                          {columns.map(col => (
-                            <td key={col} className="px-4 py-2 text-on-surface whitespace-nowrap">
-                              {row[col]}
-                            </td>
-                          ))}
+                        <tr key={row._id} className="border-b border-outline-variant/30 hover:bg-surface-container/30 transition-colors">
+                          {columns.map(col => {
+                            const colKey = `${group.fileId}_${col}`;
+                            const width = colWidths[colKey] || 150;
+                            return (
+                              <td 
+                                key={col} 
+                                className="px-3 py-1.5 text-on-surface border-r border-outline-variant/20"
+                                style={{ width, minWidth: width, maxWidth: width }}
+                              >
+                                <div className="truncate w-full">
+                                  <HighlightedText text={String(row[col])} query={query} />
+                                </div>
+                              </td>
+                            );
+                          })}
+                          <td className="w-full"></td>
                         </tr>
                       ))}
                     </tbody>

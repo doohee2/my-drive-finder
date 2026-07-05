@@ -108,3 +108,26 @@
 .icon-fill {
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
+
+/* Small custom resizer for table column resizing */
+.custom-resizer::-webkit-resizer {
+  width: 12px;
+  height: 12px;
+  background-color: #f2f3fd; /* surface-container-low */
+}
+.custom-resizer::-webkit-resizer-corner {
+  background-color: #f2f3fd;
+}
+.custom-resizer::-webkit-resizer-bottom-right-corner {
+  background-color: transparent;
+}
+.custom-resizer {
+  /* Provide a visible drag handle using background-image */
+  background-image: linear-gradient(135deg, transparent 40%, #8c919f 40%, #8c919f 50%, transparent 50%, transparent 60%, #8c919f 60%, #8c919f 70%, transparent 70%);
+  background-size: 8px 8px;
+  background-position: bottom 2px right 2px;
+  background-repeat: no-repeat;
+}
+.dark .custom-resizer {
+  background-image: linear-gradient(135deg, transparent 40%, #8c919f 40%, #8c919f 50%, transparent 50%, transparent 60%, #8c919f 60%, #8c919f 70%, transparent 70%);
+}
