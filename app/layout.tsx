@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "My Drive Finder - Search Dashboard",
+  title: "드라이브 검색",
   description: "Fast local cache and search for Google Drive spreadsheets",
   manifest: "/manifest.json",
 };

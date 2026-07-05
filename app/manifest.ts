@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'My Drive Finder',
-    short_name: 'DriveFinder',
+    name: '드라이브 검색',
+    short_name: '드라이브 검색',
     description: 'Fast local cache and search for Google Drive spreadsheets',
     start_url: '/',
     display: 'standalone',

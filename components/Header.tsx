@@ -30,11 +30,16 @@ export function Header() {
           <img 
             src="/icon-192x192.png" 
             alt="My Drive Finder Logo" 
-            className="w-8 h-8 rounded-lg shadow-sm"
+            className="w-8 h-8 rounded-lg shadow-sm dark:hidden"
+          />
+          <img 
+            src="/icon-192x192-dark.png" 
+            alt="My Drive Finder Logo" 
+            className="w-8 h-8 rounded-lg shadow-sm hidden dark:block"
           />
           <div className="flex items-center gap-1">
             <span className="text-headline-md font-headline-md text-on-surface dark:text-inverse-on-surface">
-              My Drive Finder
+              Drive Finder
             </span>
             <button 
               onClick={() => setIsInfoOpen(true)}
@@ -45,7 +50,7 @@ export function Header() {
             </button>
           </div>
         </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-1.5 ml-auto">
         {selectedFolder && (
           <div className="hidden md:flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant bg-surface-container-highest px-3 py-1.5 rounded-full">
             {isSyncing ? (
@@ -90,21 +95,22 @@ export function Header() {
         {session ? (
           <button 
             onClick={() => signOut()}
-            className="text-on-surface-variant hover:bg-surface-variant/50 p-1 rounded-full transition-colors flex items-center justify-center overflow-hidden"
+            className="text-on-surface-variant hover:bg-surface-variant/50 p-1.5 rounded-full transition-colors flex items-center justify-center overflow-hidden ml-1"
             title="로그아웃"
           >
             <img
               alt="User profile"
-              className="w-8 h-8 rounded-full object-cover"
+              className="w-7 h-7 rounded-full object-cover"
               src={session.user?.image || "https://lh3.googleusercontent.com/aida-public/AB6AXuDqKLuYp2yN9FVaUYYxOoMvjYUCPygVIfzv0nINbGRqEt6HpS27nlmd1HyL3PWm_n47Jh-xxURjXrg_woQenFkJEGc11NP6zLsTL9pfWL3qXkVNaRp6Q2-3xWMGANqa0udiGtEWaRoVFJzrlc9zjrYKVzDTaQ-OFLxVIm8_Wc0fCBjU7F8NlJbXDuYjYPOtVJTEqQ37SY2dfXnJMASWoVq-7U7VXeksJtM75FvPKbb9lBSODrSEqS2G"}
             />
           </button>
         ) : (
           <button 
             onClick={() => signIn("google")}
-            className="text-label-md font-label-md text-primary hover:bg-primary/10 px-4 py-2 rounded-full transition-colors font-medium border border-primary/20"
+            className="text-on-surface-variant hover:bg-surface-variant/50 p-2 rounded-full transition-colors flex items-center justify-center ml-1"
+            title="로그인"
           >
-            로그인
+            <span className="material-symbols-outlined text-[24px]">account_circle</span>
           </button>
         )}
       </div>
@@ -124,7 +130,7 @@ export function Header() {
               </button>
             </div>
             <p className="text-body-md font-body-md text-on-surface-variant leading-relaxed">
-              My Drive Finder 페이지는 구글 드라이브의 특정 폴더를 지정해서 해당 폴더의 csv, xlsx 파일의 내용을 검색하는 반응형 웹 기반 앱입니다. 현재 테스트 계정으로 등록된 사용자만 이용할 수 있습니다.
+              Drive Finder 페이지는 구글 드라이브의 특정 폴더를 지정해서 해당 폴더의 csv, xlsx 파일의 내용을 검색하는 반응형 웹 기반 앱입니다. 현재 테스트 계정으로 등록된 사용자만 이용할 수 있습니다.
             </p>
             <div className="mt-6 flex justify-end">
               <button 
