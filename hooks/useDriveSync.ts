@@ -132,9 +132,14 @@ export function useDriveSync(folderId?: string | null) {
         // 3. Save if changes occurred
         if (hasChanges) {
           setSyncProgress("로컬 저장소 업데이트 중...");
+          
+          const dataString = JSON.stringify(currentData);
+          const sizeInBytes = new Blob([dataString]).size;
+          
           await localforage.setItem(cacheKey, currentData);
           await localforage.setItem(metadataKey, newMetadata);
           await localforage.setItem(`lastSync_${folderId}`, new Date().toISOString());
+          await localforage.setItem(`cacheSize_${folderId}`, sizeInBytes);
         }
         
       } finally {

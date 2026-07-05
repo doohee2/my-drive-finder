@@ -6,22 +6,51 @@ interface FavoritesViewProps {
   onSelectFolder: (folder: { id: string; name: string }) => void;
 }
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import localforage from "localforage";
+import { useCallback, useEffect, useState } from "react";
+
+function formatBytes(bytes: number) {
+  if (bytes === 0) return '0 KB';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
 
 function FavoriteItem({ 
   folder, 
   onSelect, 
-  onRemove 
+  onRemove,
+  onSizeLoad
 }: { 
   folder: { id: string; name: string }; 
   onSelect: () => void; 
-  onRemove: () => void; 
+  onRemove: () => void;
+  onSizeLoad: (id: string, size: number) => void;
 }) {
   const { data: lastSyncTime } = useQuery({
     queryKey: [`lastSync_${folder.id}`],
     queryFn: async () => await localforage.getItem<string>(`lastSync_${folder.id}`),
   });
+
+  const { data: cacheSize } = useQuery({
+    queryKey: [`cacheSize_${folder.id}`],
+    queryFn: async () => {
+      let size = await localforage.getItem<number>(`cacheSize_${folder.id}`);
+      if (size === null) {
+        // Fallback calculation for old data
+        const data = await localforage.getItem<any[]>(`driveData_${folder.id}`);
+        size = data ? new Blob([JSON.stringify(data)]).size : 0;
+        await localforage.setItem(`cacheSize_${folder.id}`, size);
+      }
+      return size;
+    },
+  });
+
+  useEffect(() => {
+    if (cacheSize !== undefined) {
+      onSizeLoad(folder.id, cacheSize);
+    }
+  }, [cacheSize, folder.id, onSizeLoad]);
 
   return (
     <li className="group">
@@ -38,7 +67,7 @@ function FavoriteItem({
               {folder.name}
             </span>
             <span className="text-label-sm text-on-surface-variant mt-0.5">
-              {lastSyncTime ? `마지막 동기화: ${new Date(lastSyncTime).toLocaleString()}` : "동기화 기록 없음"}
+              {lastSyncTime ? `마지막 동기화: ${new Date(lastSyncTime).toLocaleString()} · 사용 용량: ${cacheSize !== undefined ? formatBytes(cacheSize) : '계산 중...'}` : "동기화 기록 없음"}
             </span>
           </div>
         </button>
@@ -55,7 +84,34 @@ function FavoriteItem({
 }
 
 export function FavoritesView({ onSelectFolder }: FavoritesViewProps) {
-  const { favorites, removeFavorite, isLoaded } = useFavorites();
+  const { favorites, removeFavorite, isLoaded, clearAllCache } = useFavorites();
+  const [sizes, setSizes] = useState<Record<string, number>>({});
+  const queryClient = useQueryClient();
+
+  const handleSizeLoad = useCallback((id: string, size: number) => {
+    setSizes(prev => ({ ...prev, [id]: size }));
+  }, []);
+
+  const handleRemove = async (id: string) => {
+    await removeFavorite(id);
+    setSizes(prev => {
+      const newSizes = { ...prev };
+      delete newSizes[id];
+      return newSizes;
+    });
+    queryClient.invalidateQueries();
+  };
+
+  const handleClearAll = async () => {
+    if (window.confirm("모든 캐시 데이터를 삭제하시겠습니까? (즐겨찾기 목록은 유지됩니다)")) {
+      await clearAllCache();
+      setSizes({});
+      queryClient.invalidateQueries();
+      alert("모든 로컬 캐시 데이터가 삭제되었습니다.");
+    }
+  };
+
+  const totalSize = Object.values(sizes).reduce((acc, curr) => acc + curr, 0);
 
   if (!isLoaded) {
     return (
@@ -81,16 +137,32 @@ export function FavoritesView({ onSelectFolder }: FavoritesViewProps) {
             <p className="text-sm mt-2">검색 탭에서 폴더를 선택한 뒤 별 모양 아이콘을 눌러 추가해 보세요.</p>
           </div>
         ) : (
-          <ul className="space-y-3">
-            {favorites.map((folder) => (
-              <FavoriteItem 
-                key={folder.id} 
-                folder={folder} 
-                onSelect={() => onSelectFolder(folder)} 
-                onRemove={() => removeFavorite(folder.id)} 
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-3">
+              {favorites.map((folder) => (
+                <FavoriteItem 
+                  key={folder.id} 
+                  folder={folder} 
+                  onSelect={() => onSelectFolder(folder)} 
+                  onRemove={() => handleRemove(folder.id)} 
+                  onSizeLoad={handleSizeLoad}
+                />
+              ))}
+            </ul>
+            <div className="mt-8 pt-6 border-t border-outline-variant/20 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex flex-col">
+                <span className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">현재 사용 중인 전체 캐시 용량</span>
+                <span className="text-headline-sm font-headline-sm text-on-surface mt-1">{formatBytes(totalSize)}</span>
+              </div>
+              <button
+                onClick={handleClearAll}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-error text-on-error hover:bg-error/90 px-6 py-2.5 rounded-lg text-label-md font-medium transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">delete</span>
+                전체 캐시 초기화
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

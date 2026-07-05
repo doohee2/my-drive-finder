@@ -33,6 +33,22 @@ export function useFavorites() {
     const newFavorites = favorites.filter((f) => f.id !== folderId);
     setFavorites(newFavorites);
     await localforage.setItem(FAVORITES_KEY, newFavorites);
+    
+    // 로컬 캐시 삭제
+    await localforage.removeItem(`driveData_${folderId}`);
+    await localforage.removeItem(`driveMetadata_${folderId}`);
+    await localforage.removeItem(`lastSync_${folderId}`);
+    await localforage.removeItem(`cacheSize_${folderId}`);
+  };
+
+  const clearAllCache = async () => {
+    // 모든 즐겨찾기 폴더의 캐시 데이터 삭제 (즐겨찾기 목록은 유지)
+    for (const folder of favorites) {
+      await localforage.removeItem(`driveData_${folder.id}`);
+      await localforage.removeItem(`driveMetadata_${folder.id}`);
+      await localforage.removeItem(`lastSync_${folder.id}`);
+      await localforage.removeItem(`cacheSize_${folder.id}`);
+    }
   };
 
   const isFavorite = (folderId: string) => {
@@ -47,5 +63,5 @@ export function useFavorites() {
     }
   };
 
-  return { favorites, addFavorite, removeFavorite, toggleFavorite, isFavorite, isLoaded };
+  return { favorites, addFavorite, removeFavorite, toggleFavorite, isFavorite, isLoaded, clearAllCache };
 }
