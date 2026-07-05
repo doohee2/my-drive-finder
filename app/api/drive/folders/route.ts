@@ -24,7 +24,41 @@ export async function GET() {
     });
 
     const folders = response.data.files || [];
-    return NextResponse.json({ folders });
+    
+    // Build a map for quick lookup
+    const folderMap = new Map(folders.map(f => [f.id, f]));
+
+    // Resolve paths
+    const foldersWithPaths = folders.map(folder => {
+      const pathNames = [folder.name];
+      let currentParentId = folder.parents?.[0];
+
+      // Traverse up to 5 levels to prevent infinite loops and excessive depth
+      let depth = 0;
+      while (currentParentId && depth < 5) {
+        const parentFolder = folderMap.get(currentParentId);
+        if (parentFolder) {
+          pathNames.unshift(parentFolder.name);
+          currentParentId = parentFolder.parents?.[0];
+        } else {
+          // Parent not found in the fetched list, assume it's the root (My Drive)
+          pathNames.unshift("내 드라이브");
+          break;
+        }
+        depth++;
+      }
+
+      return {
+        id: folder.id,
+        name: folder.name,
+        path: pathNames.join(" / ")
+      };
+    });
+
+    // Sort by path alphabetically
+    foldersWithPaths.sort((a, b) => a.path.localeCompare(b.path));
+
+    return NextResponse.json({ folders: foldersWithPaths });
   } catch (error: any) {
     console.error("Error fetching drive folders:", error);
     return NextResponse.json(
