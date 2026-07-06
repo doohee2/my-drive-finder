@@ -6,6 +6,7 @@ import { SideNav } from "@/components/SideNav";
 import { BottomNav } from "@/components/BottomNav";
 import { FolderSettingsCard } from "@/components/FolderSettingsCard";
 import { SearchBar } from "@/components/SearchBar";
+import { FileExplorerModal } from "@/components/FileExplorerModal";
 import { SearchResults } from "@/components/SearchResults";
 import { EmptyState } from "@/components/EmptyState";
 import { FavoritesView } from "@/components/FavoritesView";
@@ -21,6 +22,9 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [excludeQuery, setExcludeQuery] = useState("");
   const [excludeEnabled, setExcludeEnabled] = useState(false);
+  const [isFolderPickerOpen, setIsFolderPickerOpen] = useState(false);
+  const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
+  const [folderPickerTab, setFolderPickerTab] = useState<'favorites' | 'browse'>('favorites');
   const [currentTab, setCurrentTab] = useState<'search' | 'favorites'>('search');
 
   const results = useSearch(cachedData, query, excludeQuery, excludeEnabled);
@@ -55,7 +59,15 @@ export default function Home() {
               
               {/* Footer Information */}
               <div className="text-center text-[12px] text-on-surface-variant/70 pt-8 pb-4">
-                {APP_CONFIG.lastModifiedText}
+                {APP_CONFIG.lastModifiedText.includes("by doohee2") ? (
+                  <>
+                    {APP_CONFIG.lastModifiedText.split("by doohee2")[0]}
+                    <span onClick={() => setIsFileExplorerOpen(true)} className="cursor-default hover:text-on-surface-variant">by doohee2</span>
+                    {APP_CONFIG.lastModifiedText.split("by doohee2")[1]}
+                  </>
+                ) : (
+                  <span onClick={() => setIsFileExplorerOpen(true)} className="cursor-default hover:text-on-surface-variant">{APP_CONFIG.lastModifiedText}</span>
+                )}
               </div>
             </div>
           ) : (
@@ -64,6 +76,7 @@ export default function Home() {
         </main>
       </div>
       <BottomNav currentTab={currentTab} onChangeTab={setCurrentTab} />
+      <FileExplorerModal isOpen={isFileExplorerOpen} onClose={() => setIsFileExplorerOpen(false)} />
     </>
   );
 }

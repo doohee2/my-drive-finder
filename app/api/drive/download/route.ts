@@ -23,16 +23,32 @@ export async function GET(request: Request) {
     const drive = google.drive({ version: "v3", auth: oauth2Client });
 
     let stream;
-    
-    // Google Sheets need to be exported
+    let exportMimeType = mimeType;
+
+    // Google Workspace files need to be exported to Office formats
     if (mimeType === "application/vnd.google-apps.spreadsheet") {
+      exportMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       const response = await drive.files.export(
-        { fileId, mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+        { fileId, mimeType: exportMimeType },
+        { responseType: "stream" }
+      );
+      stream = response.data;
+    } else if (mimeType === "application/vnd.google-apps.document") {
+      exportMimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      const response = await drive.files.export(
+        { fileId, mimeType: exportMimeType },
+        { responseType: "stream" }
+      );
+      stream = response.data;
+    } else if (mimeType === "application/vnd.google-apps.presentation") {
+      exportMimeType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+      const response = await drive.files.export(
+        { fileId, mimeType: exportMimeType },
         { responseType: "stream" }
       );
       stream = response.data;
     } else {
-      // Regular files (.xlsx, .csv) are downloaded
+      // Regular files are downloaded
       const response = await drive.files.get(
         { fileId, alt: "media" },
         { responseType: "stream" }
@@ -41,11 +57,7 @@ export async function GET(request: Request) {
     }
 
     const headers = new Headers();
-    if (mimeType === "text/csv") {
-        headers.set('Content-Type', 'text/csv');
-    } else {
-        headers.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    }
+    headers.set('Content-Type', exportMimeType);
 
     const webStream = new ReadableStream({
       start(controller) {
