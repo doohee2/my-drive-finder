@@ -115,6 +115,21 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
     return 'insert_drive_file';
   };
 
+  const formatBytes = (bytesStr?: string) => {
+    if (!bytesStr) return "";
+    const bytes = parseInt(bytesStr, 10);
+    if (isNaN(bytes)) return "";
+    if (bytes === 0) return "0 KB";
+    
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    // Bytes도 최소 KB로 표시하도록 조정 (선택사항이지만 더 깔끔할 수 있음, 여기서는 원본 그대로)
+    if (i === 0) return bytes + " Bytes";
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -185,13 +200,20 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
 
               {files.map((file) => (
                 <li key={file.id} className="flex items-center gap-2 group">
-                  <div className="flex-1 flex items-center gap-3 p-2.5 bg-surface-container-lowest border border-outline-variant/30 rounded-lg">
-                    <span className="material-symbols-outlined text-[20px] text-secondary icon-fill">
+                  <div className="flex-1 min-w-0 flex items-center gap-3 p-2.5 bg-surface-container-lowest border border-outline-variant/30 rounded-lg">
+                    <span className="material-symbols-outlined text-[20px] text-secondary icon-fill shrink-0">
                       {getFileIcon(file.mimeType)}
                     </span>
-                    <span className="text-body-sm font-medium text-on-surface truncate flex-1">
-                      {file.name}
-                    </span>
+                    <div className="flex-1 min-w-0 flex items-baseline gap-2 truncate">
+                      <span className="text-body-sm font-medium text-on-surface truncate">
+                        {file.name}
+                      </span>
+                      {file.size && (
+                        <span className="text-[11px] text-on-surface-variant shrink-0">
+                          {formatBytes(file.size)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={() => handleDownload(file)}
