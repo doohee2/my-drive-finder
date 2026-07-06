@@ -2,13 +2,11 @@
 
 import { CachedRow } from "@/hooks/useDriveSync";
 import { useMemo, useState, useRef } from "react";
-import Papa from "papaparse";
 
 import * as XLSX from "xlsx";
 
 interface SearchResultsProps {
   results: CachedRow[];
-  fullData: CachedRow[];
   query: string;
   lastSyncTime?: string | number | null;
 }
@@ -40,64 +38,40 @@ const HighlightedText = ({ text, query }: { text: string; query: string }) => {
   );
 };
 
-export function SearchResults({ results, fullData, query, lastSyncTime }: SearchResultsProps) {
+export function SearchResults({ results, query, lastSyncTime }: SearchResultsProps) {
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [colWidths, setColWidths] = useState<Record<string, number>>({});
   const resizingCol = useRef<{ key: string, startX: number, startWidth: number } | null>(null);
 
-  const handleExport = (e: React.MouseEvent, fileId: string, originalFileName: string) => {
+  const handleExport = (e: React.MouseEvent, groupFileName: string, rows: CachedRow[]) => {
     e.stopPropagation(); // 아코디언 토글 방지
     
-    // 전체 데이터(fullData)에서 해당 파일의 모든 행 추출
-    const fileRows = fullData.filter(r => r._fileId === fileId);
-    if (fileRows.length === 0) return;
+    if (rows.length === 0) return;
 
-    // 시트별로 그룹화
-    const sheets = new Map<string, any[]>();
-    for (const row of fileRows) {
-      const sheet = row._sheetName || 'Sheet1';
-      if (!sheets.has(sheet)) sheets.set(sheet, []);
-      
-      // 검색용 내부 메타데이터 필드(_id, _fileId 등) 제외
+    // 검색용 내부 메타데이터 필드(_id, _fileId 등) 제외
+    const cleanRows = rows.map(row => {
       const cleanRow: any = {};
       for (const key of Object.keys(row)) {
         if (!key.startsWith('_')) {
           cleanRow[key] = row[key];
         }
       }
-      sheets.get(sheet)!.push(cleanRow);
-    }
+      return cleanRow;
+    });
 
-    // 파일명 결정
-    let exportName = originalFileName;
-    const isCsv = exportName.toLowerCase().endsWith('.csv');
+    // 워크북 생성
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(cleanRows);
     
-    if (!isCsv && !exportName.toLowerCase().endsWith('.xlsx')) {
-      exportName += '.xlsx'; 
-    }
+    const safeSheetName = "검색결과";
+    XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
 
-    if (isCsv) {
-      // CSV 전용 내보내기 (papaparse 사용)
-      // CSV는 시트가 하나이므로 첫 번째 시트의 데이터를 가져옵니다.
-      const firstSheetData = Array.from(sheets.values())[0] || [];
-      const csvString = Papa.unparse(firstSheetData);
-      
-      const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' }); // BOM 추가 (엑셀에서 한글 깨짐 방지)
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = exportName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      // 엑셀(.xlsx) 전용 내보내기
-      const wb = XLSX.utils.book_new();
-      for (const [sheetName, rows] of sheets.entries()) {
-        const ws = XLSX.utils.json_to_sheet(rows);
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
-      }
-      XLSX.writeFile(wb, exportName);
-    }
+    // 파일명 결정 (.xlsx 형식 통일)
+    let finalExportName = groupFileName.replace(/\.(csv|xlsx?)$/i, '');
+    finalExportName += '_검색결과.xlsx';
+
+    // 파일 저장 트리거
+    XLSX.writeFile(wb, finalExportName);
   };
 
   const startResize = (e: React.MouseEvent | React.TouchEvent, colKey: string) => {
@@ -194,9 +168,9 @@ export function SearchResults({ results, fullData, query, lastSyncTime }: Search
             >
               <div className="flex items-center gap-2 md:gap-3 min-w-0 pr-3">
                 <button 
-                  onClick={(e) => handleExport(e, group.rows[0]._fileId, group.rows[0]._fileName)}
+                  onClick={(e) => handleExport(e, group.fileName, group.rows)}
                   className="shrink-0 p-1.5 -ml-1.5 rounded-full hover:bg-secondary/10 text-secondary transition-colors"
-                  title="원본 파일 내보내기 (다운로드)"
+                  title="검색 결과 내보내기 (.xlsx)"
                 >
                   <span className="material-symbols-outlined text-[20px] icon-fill block">
                     {group.fileName.endsWith('.csv') || group.sheetName === 'CSV' ? 'data_table' : 'description'}
