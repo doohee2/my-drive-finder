@@ -79,31 +79,33 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
       <div className="bg-surface dark:bg-surface-dim w-full max-w-lg rounded-2xl shadow-xl flex flex-col max-h-[80vh] overflow-hidden">
-        <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center">
-          <h2 className="text-headline-md font-headline-md text-on-surface">폴더 선택</h2>
-          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-variant transition-colors">
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        
-        {/* Breadcrumbs */}
-        {!loading && !error && session && pathStack.length > 1 && (
-          <div className="px-4 py-3 bg-surface-container-lowest border-b border-outline-variant/30 flex flex-wrap items-center gap-1 overflow-hidden">
-            {pathStack.map((step, idx) => (
-              <div key={step.id} className="flex items-center shrink-0">
-                <button
-                  onClick={() => navigateUpTo(idx)}
-                  className={`text-body-sm font-medium hover:underline ${idx === pathStack.length - 1 ? 'text-on-surface' : 'text-on-surface-variant hover:text-primary'}`}
-                >
-                  {step.name}
-                </button>
-                {idx < pathStack.length - 1 && (
-                  <span className="material-symbols-outlined text-outline-variant text-sm mx-1">chevron_right</span>
-                )}
-              </div>
-            ))}
+        <div className="p-4 border-b border-outline-variant/30 bg-surface-container-low shrink-0 flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <h2 className="text-headline-md font-headline-md text-on-surface">폴더 선택</h2>
+            <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-variant transition-colors">
+              <span className="material-symbols-outlined">close</span>
+            </button>
           </div>
-        )}
+          
+          {/* Breadcrumbs */}
+          {!loading && !error && session && pathStack.length > 1 && (
+            <div className="flex flex-wrap items-center gap-1 overflow-hidden">
+              {pathStack.map((step, idx) => (
+                <div key={step.id} className="flex items-center shrink-0">
+                  <button
+                    onClick={() => navigateUpTo(idx)}
+                    className={`text-body-sm font-medium hover:underline ${idx === pathStack.length - 1 ? 'text-on-surface' : 'text-on-surface-variant hover:text-primary'}`}
+                  >
+                    {step.name}
+                  </button>
+                  {idx < pathStack.length - 1 && (
+                    <span className="material-symbols-outlined text-outline-variant text-sm mx-1">chevron_right</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="p-4 flex-1 overflow-y-auto">
           {!session ? (
