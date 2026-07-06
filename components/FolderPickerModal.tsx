@@ -88,7 +88,7 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
         
         {/* Breadcrumbs */}
         {!loading && !error && session && pathStack.length > 1 && (
-          <div className="px-4 py-3 bg-surface-container-lowest border-b border-outline-variant/30 flex flex-wrap items-center gap-1 overflow-x-auto no-scrollbar">
+          <div className="px-4 py-3 bg-surface-container-lowest border-b border-outline-variant/30 flex flex-wrap items-center gap-1 overflow-hidden">
             {pathStack.map((step, idx) => (
               <div key={step.id} className="flex items-center shrink-0">
                 <button
