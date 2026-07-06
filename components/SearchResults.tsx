@@ -2,9 +2,13 @@
 
 import { CachedRow } from "@/hooks/useDriveSync";
 import { useMemo, useState, useRef } from "react";
+import Papa from "papaparse";
+
+import * as XLSX from "xlsx";
 
 interface SearchResultsProps {
   results: CachedRow[];
+  fullData: CachedRow[];
   query: string;
   lastSyncTime?: string | number | null;
 }
@@ -36,32 +40,96 @@ const HighlightedText = ({ text, query }: { text: string; query: string }) => {
   );
 };
 
-export function SearchResults({ results, query, lastSyncTime }: SearchResultsProps) {
+export function SearchResults({ results, fullData, query, lastSyncTime }: SearchResultsProps) {
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [colWidths, setColWidths] = useState<Record<string, number>>({});
   const resizingCol = useRef<{ key: string, startX: number, startWidth: number } | null>(null);
 
-  const startResize = (e: React.MouseEvent, colKey: string) => {
-    e.preventDefault();
+  const handleExport = (e: React.MouseEvent, fileId: string, originalFileName: string) => {
+    e.stopPropagation(); // 아코디언 토글 방지
+    
+    // 전체 데이터(fullData)에서 해당 파일의 모든 행 추출
+    const fileRows = fullData.filter(r => r._fileId === fileId);
+    if (fileRows.length === 0) return;
+
+    // 시트별로 그룹화
+    const sheets = new Map<string, any[]>();
+    for (const row of fileRows) {
+      const sheet = row._sheetName || 'Sheet1';
+      if (!sheets.has(sheet)) sheets.set(sheet, []);
+      
+      // 검색용 내부 메타데이터 필드(_id, _fileId 등) 제외
+      const cleanRow: any = {};
+      for (const key of Object.keys(row)) {
+        if (!key.startsWith('_')) {
+          cleanRow[key] = row[key];
+        }
+      }
+      sheets.get(sheet)!.push(cleanRow);
+    }
+
+    // 파일명 결정
+    let exportName = originalFileName;
+    const isCsv = exportName.toLowerCase().endsWith('.csv');
+    
+    if (!isCsv && !exportName.toLowerCase().endsWith('.xlsx')) {
+      exportName += '.xlsx'; 
+    }
+
+    if (isCsv) {
+      // CSV 전용 내보내기 (papaparse 사용)
+      // CSV는 시트가 하나이므로 첫 번째 시트의 데이터를 가져옵니다.
+      const firstSheetData = Array.from(sheets.values())[0] || [];
+      const csvString = Papa.unparse(firstSheetData);
+      
+      const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' }); // BOM 추가 (엑셀에서 한글 깨짐 방지)
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = exportName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      // 엑셀(.xlsx) 전용 내보내기
+      const wb = XLSX.utils.book_new();
+      for (const [sheetName, rows] of sheets.entries()) {
+        const ws = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      }
+      XLSX.writeFile(wb, exportName);
+    }
+  };
+
+  const startResize = (e: React.MouseEvent | React.TouchEvent, colKey: string) => {
+    // Prevent default to stop scrolling on mobile, but e.preventDefault() in React 
+    // passive touch event handlers might be ignored. We'll use CSS `touch-action: none` below.
     e.stopPropagation();
     const currentWidth = colWidths[colKey] || 150;
-    resizingCol.current = { key: colKey, startX: e.pageX, startWidth: currentWidth };
     
-    const handleMouseMove = (moveEvent: globalThis.MouseEvent) => {
+    // Get starting X coordinate from either mouse or touch
+    const startX = 'touches' in e ? e.touches[0].pageX : (e as React.MouseEvent).pageX;
+    resizingCol.current = { key: colKey, startX, startWidth: currentWidth };
+    
+    const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
       if (!resizingCol.current) return;
-      const diff = moveEvent.pageX - resizingCol.current.startX;
+      const currentX = 'touches' in moveEvent ? moveEvent.touches[0].pageX : (moveEvent as MouseEvent).pageX;
+      const diff = currentX - resizingCol.current.startX;
       const newWidth = Math.max(50, resizingCol.current.startWidth + diff);
       setColWidths(prev => ({ ...prev, [resizingCol.current!.key]: newWidth }));
     };
     
-    const handleMouseUp = () => {
+    const handleUp = () => {
       resizingCol.current = null;
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleUp);
     };
     
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleUp);
   };
 
   const grouped = useMemo(() => {
@@ -125,9 +193,15 @@ export function SearchResults({ results, query, lastSyncTime }: SearchResultsPro
               className="bg-surface-container-low px-4 py-2.5 md:px-5 md:py-3 border-b border-outline-variant/30 flex justify-between items-center cursor-pointer hover:bg-surface-container-highest transition-colors"
             >
               <div className="flex items-center gap-2 md:gap-3 min-w-0 pr-3">
-                <span className="material-symbols-outlined text-[20px] text-secondary icon-fill shrink-0">
-                  {group.fileName.endsWith('.csv') || group.sheetName === 'CSV' ? 'data_table' : 'description'}
-                </span>
+                <button 
+                  onClick={(e) => handleExport(e, group.rows[0]._fileId, group.rows[0]._fileName)}
+                  className="shrink-0 p-1.5 -ml-1.5 rounded-full hover:bg-secondary/10 text-secondary transition-colors"
+                  title="원본 파일 내보내기 (다운로드)"
+                >
+                  <span className="material-symbols-outlined text-[20px] icon-fill block">
+                    {group.fileName.endsWith('.csv') || group.sheetName === 'CSV' ? 'data_table' : 'description'}
+                  </span>
+                </button>
                 <div className="min-w-0 truncate">
                   <h4 className="text-body-sm md:text-body-md font-medium text-on-surface truncate">
                     {group.fileName}
@@ -166,7 +240,8 @@ export function SearchResults({ results, query, lastSyncTime }: SearchResultsPro
                               </div>
                               <div 
                                 onMouseDown={(e) => startResize(e, colKey)}
-                                className="absolute right-0 top-0 w-[6px] h-full cursor-col-resize bg-outline-variant/30 hover:bg-primary/60 transition-colors z-20 flex items-center justify-center opacity-70 hover:opacity-100"
+                                onTouchStart={(e) => startResize(e, colKey)}
+                                className="absolute right-0 top-0 w-[12px] -mr-[6px] h-full cursor-col-resize bg-outline-variant/30 hover:bg-primary/60 transition-colors z-20 flex items-center justify-center opacity-70 hover:opacity-100 touch-none"
                               />
                             </th>
                           );

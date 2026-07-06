@@ -50,7 +50,7 @@ export default function Home() {
               {query.trim() === "" ? (
                 <EmptyState />
               ) : (
-                <SearchResults results={results} query={query} lastSyncTime={lastSyncTime} />
+                <SearchResults results={results} fullData={cachedData} query={query} lastSyncTime={lastSyncTime} />
               )}
               
               {/* Footer Information */}
