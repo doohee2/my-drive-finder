@@ -15,9 +15,9 @@ export async function GET() {
 
     const drive = google.drive({ version: "v3", auth: oauth2Client });
 
-    // Fetch only folders
+    // Fetch only folders owned by the user (exclude shared folders)
     const response = await drive.files.list({
-      q: "mimeType='application/vnd.google-apps.folder' and trashed=false",
+      q: "mimeType='application/vnd.google-apps.folder' and trashed=false and 'me' in owners",
       fields: "nextPageToken, files(id, name, parents)",
       orderBy: "name",
       pageSize: 1000,

@@ -153,9 +153,9 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
           {!session ? (
             <div className="text-center text-on-surface-variant py-8">로그인이 필요합니다.</div>
           ) : loading ? (
-            <div className="text-center text-on-surface-variant py-12 flex flex-col items-center justify-center gap-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span>항목을 불러오는 중...</span>
+            <div className="text-center text-on-surface-variant py-8 flex items-center justify-center gap-2">
+              <span className="material-symbols-outlined animate-spin">refresh</span>
+              항목을 불러오는 중...
             </div>
           ) : error ? (
             <div className="text-error text-center py-8">{error}</div>
@@ -196,14 +196,15 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
                   <button
                     onClick={() => handleDownload(file)}
                     disabled={downloadingId === file.id}
-                    className={`shrink-0 flex items-center justify-center px-4 py-2 rounded-lg border transition-colors ${
+                    className={`shrink-0 flex items-center justify-center px-3 py-1.5 rounded-lg border border-outline-variant/30 transition-colors ${
                       downloadingId === file.id
-                        ? 'bg-surface-variant text-on-surface-variant border-outline-variant cursor-not-allowed'
-                        : 'bg-primary text-on-primary hover:bg-primary/90 border-transparent'
+                        ? 'bg-surface-variant text-on-surface-variant cursor-not-allowed opacity-70'
+                        : 'bg-surface-container-high hover:bg-surface-variant text-on-surface-variant hover:text-on-surface'
                     }`}
+                    title="이 파일을 로컬로 다운로드합니다"
                   >
                     {downloadingId === file.id ? (
-                      <span className="material-symbols-outlined animate-spin text-[18px]">refresh</span>
+                      <span className="material-symbols-outlined animate-spin text-[16px]">refresh</span>
                     ) : (
                       <span className="text-[12px] font-medium whitespace-nowrap">다운로드</span>
                     )}
