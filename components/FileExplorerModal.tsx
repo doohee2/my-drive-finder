@@ -97,6 +97,27 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
     }
   };
 
+  const handleNativeDownload = () => {
+    if (!selectedForDownload) return;
+    const file = selectedForDownload;
+    
+    let finalName = file.name;
+    if (file.mimeType === 'application/vnd.google-apps.spreadsheet' && !finalName.endsWith('.xlsx')) finalName += '.xlsx';
+    if (file.mimeType === 'application/vnd.google-apps.document' && !finalName.endsWith('.docx')) finalName += '.docx';
+    if (file.mimeType === 'application/vnd.google-apps.presentation' && !finalName.endsWith('.pptx')) finalName += '.pptx';
+
+    const downloadUrl = `/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}&filename=${encodeURIComponent(finalName)}`;
+    
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = finalName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    
+    setSelectedForDownload(null);
+  };
+
   const handleDownload = async () => {
     if (!selectedForDownload || downloadingId) return;
     const file = selectedForDownload;
@@ -339,37 +360,36 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
         {selectedForDownload && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-dim/80 backdrop-blur-sm p-4 rounded-2xl">
             <div className="bg-surface-container-highest w-full max-w-sm rounded-xl p-6 shadow-2xl flex flex-col gap-4 border border-outline-variant/30">
-              <div className="flex items-center gap-3 text-primary">
-                <span className="material-symbols-outlined text-3xl">download</span>
+              <div className="flex flex-col items-center gap-2 text-primary mb-2">
+                <span className="material-symbols-outlined text-4xl">download</span>
                 <h3 className="text-headline-sm font-bold">다운로드 확인</h3>
               </div>
-              <div className="flex flex-col gap-1 my-2">
-                <p className="text-body-md text-on-surface break-all font-medium">
+              <div className="flex flex-col gap-2 my-2 text-center">
+                <p className="text-title-md text-primary break-all font-bold bg-primary/10 py-3 px-4 rounded-lg border border-primary/20">
                   {selectedForDownload.name}
                 </p>
-                {selectedForDownload.size ? (
-                  <p className="text-label-md text-on-surface-variant">
-                    크기: {formatBytes(selectedForDownload.size)}
-                  </p>
-                ) : (
-                  <p className="text-label-md text-on-surface-variant">
-                    (구글 워크스페이스 포맷은 다운로드 완료 후 용량이 결정됩니다)
-                  </p>
-                )}
+                <p className="text-label-md text-on-surface-variant font-medium">
+                  ({selectedForDownload.size ? formatBytes(selectedForDownload.size) : "구글 워크스페이스 포맷은 다운로드 완료 후 용량이 결정됩니다"})
+                </p>
               </div>
-              <p className="text-body-sm text-on-surface-variant mb-2">이 파일을 기기에 다운로드 하시겠습니까?</p>
-              <div className="flex justify-end gap-2">
-                <button 
-                  onClick={cancelDownloadPrompt}
-                  className="px-4 py-2 rounded-lg text-label-md font-medium text-on-surface-variant hover:bg-surface-variant transition-colors"
-                >
-                  취소
-                </button>
+              <div className="flex flex-col gap-2 w-full mt-2">
                 <button 
                   onClick={handleDownload}
-                  className="px-4 py-2 rounded-lg text-label-md font-medium bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm"
+                  className="w-full py-3 rounded-lg text-label-lg font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm"
                 >
-                  확인
+                  기본 다운로드
+                </button>
+                <button 
+                  onClick={handleNativeDownload}
+                  className="w-full py-3 rounded-lg text-label-lg font-bold bg-surface-container-high text-on-surface hover:bg-surface-variant border border-outline-variant/30 transition-colors"
+                >
+                  브라우저 다운로드 (대용량)
+                </button>
+                <button 
+                  onClick={cancelDownloadPrompt}
+                  className="w-full py-3 rounded-lg text-label-lg font-bold text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors"
+                >
+                  취소
                 </button>
               </div>
             </div>

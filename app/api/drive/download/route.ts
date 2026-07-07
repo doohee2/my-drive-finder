@@ -56,8 +56,12 @@ export async function GET(request: Request) {
       stream = response.data;
     }
 
+    const filename = searchParams.get("filename");
     const headers = new Headers();
     headers.set('Content-Type', exportMimeType);
+    if (filename) {
+      headers.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    }
 
     const webStream = new ReadableStream({
       start(controller) {
