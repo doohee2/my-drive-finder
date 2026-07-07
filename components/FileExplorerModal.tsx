@@ -21,6 +21,9 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
   const [files, setFiles] = useState<DriveItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<number>(0);
+  const [selectedForDownload, setSelectedForDownload] = useState<DriveItem | null>(null);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [error, setError] = useState("");
   
   // Navigation state
@@ -75,15 +78,59 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
     fetchContents(newStack[newStack.length - 1].id);
   };
 
-  const handleDownload = async (file: DriveItem) => {
-    if (downloadingId) return; // Prevent multiple downloads at once
+  const handleClose = () => {
+    if (downloadingId) return; // Prevent close during download
+    onClose();
+  };
+
+  const confirmDownload = (file: DriveItem) => {
+    setSelectedForDownload(file);
+  };
+
+  const cancelDownloadPrompt = () => {
+    setSelectedForDownload(null);
+  };
+
+  const stopDownload = () => {
+    if (abortController) {
+      abortController.abort();
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!selectedForDownload || downloadingId) return;
+    const file = selectedForDownload;
+    
     setDownloadingId(file.id);
+    setDownloadProgress(0);
+    setSelectedForDownload(null);
+    
+    const controller = new AbortController();
+    setAbortController(controller);
     
     try {
-      const res = await fetch(`/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}`);
+      const res = await fetch(`/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}`, {
+        signal: controller.signal
+      });
       if (!res.ok) throw new Error("다운로드에 실패했습니다.");
       
-      const blob = await res.blob();
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("스트림을 읽을 수 없습니다.");
+      
+      const chunks = [];
+      let receivedLength = 0;
+      
+      while(true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+          receivedLength += value.length;
+          setDownloadProgress(receivedLength);
+        }
+      }
+      
+      const blob = new Blob(chunks);
       const url = window.URL.createObjectURL(blob);
       
       // Determine correct extension for Google Workspace files if needed
@@ -100,9 +147,15 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
-      alert(err.message);
+      if (err.name === 'AbortError') {
+        alert("다운로드가 취소되었습니다.");
+      } else {
+        alert(err.message);
+      }
     } finally {
       setDownloadingId(null);
+      setDownloadProgress(0);
+      setAbortController(null);
     }
   };
 
@@ -134,14 +187,18 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-surface dark:bg-surface-dim w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[85vh] overflow-hidden">
+      <div className="bg-surface dark:bg-surface-dim w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[85vh] overflow-hidden relative">
         <div className="p-4 border-b border-outline-variant/30 bg-surface-container-low shrink-0 flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <h2 className="text-headline-md font-headline-md text-on-surface flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">download</span>
               다운로드 파일 선택
             </h2>
-            <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-variant transition-colors">
+            <button 
+              onClick={handleClose} 
+              disabled={!!downloadingId}
+              className={`p-1 rounded-full transition-colors ${downloadingId ? 'text-on-surface-variant/30 cursor-not-allowed' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant'}`}
+            >
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
@@ -200,44 +257,124 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
               
               {folders.length > 0 && files.length > 0 && <hr className="border-outline-variant/20 my-2" />}
 
-              {files.map((file) => (
-                <li key={file.id} className="flex items-center gap-2 group">
-                  <div className="flex-1 min-w-0 flex items-center gap-3 p-2.5 bg-surface-container-lowest border border-outline-variant/30 rounded-lg">
-                    <span className="material-symbols-outlined text-[20px] text-secondary icon-fill shrink-0">
-                      {getFileIcon(file.mimeType)}
-                    </span>
-                    <div className="flex-1 min-w-0 flex items-baseline gap-2 truncate">
-                      <span className="text-body-sm font-medium text-on-surface truncate">
-                        {file.name}
-                      </span>
-                      {file.size && (
-                        <span className="text-[11px] text-on-surface-variant shrink-0">
-                          {formatBytes(file.size)}
-                        </span>
+              {files.map((file) => {
+                const isDownloading = downloadingId === file.id;
+                let progressPercent = 0;
+                let progressText = "";
+                
+                if (isDownloading) {
+                  const fileSizeNum = file.size ? parseInt(file.size, 10) : 0;
+                  if (fileSizeNum > 0) {
+                    progressPercent = Math.min(100, Math.round((downloadProgress / fileSizeNum) * 100));
+                    progressText = `${formatBytes(downloadProgress.toString())} / ${formatBytes(file.size)} (${progressPercent}%)`;
+                  } else {
+                    progressPercent = 100;
+                    progressText = `${formatBytes(downloadProgress.toString())} 다운로드 됨...`;
+                  }
+                }
+
+                return (
+                <li key={file.id} className="flex flex-col gap-1 relative group">
+                  <div className="flex items-center gap-2 relative z-10">
+                    <div className={`flex-1 min-w-0 flex items-center gap-3 p-2.5 rounded-lg border transition-colors relative overflow-hidden ${isDownloading ? 'bg-transparent border-primary/30' : 'bg-surface-container-lowest border-outline-variant/30'}`}>
+                      {/* Gauge Bar Background */}
+                      {isDownloading && (
+                        <div 
+                          className="absolute left-0 top-0 bottom-0 bg-primary/10 transition-all duration-300 ease-out z-0" 
+                          style={{ width: file.size ? `${progressPercent}%` : '100%' }}
+                        />
                       )}
+                      <span className="material-symbols-outlined text-[20px] text-secondary icon-fill shrink-0 relative z-10">
+                        {getFileIcon(file.mimeType)}
+                      </span>
+                      <div className="flex-1 min-w-0 flex flex-col justify-center relative z-10">
+                        <div className="flex items-baseline gap-2 truncate">
+                          <span className="text-body-sm font-medium text-on-surface truncate">
+                            {file.name}
+                          </span>
+                          {!isDownloading && file.size && (
+                            <span className="text-[11px] text-on-surface-variant shrink-0">
+                              {formatBytes(file.size)}
+                            </span>
+                          )}
+                        </div>
+                        {isDownloading && (
+                          <span className="text-[11px] text-primary font-medium mt-0.5">
+                            {progressText}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownload(file)}
-                    disabled={downloadingId === file.id}
-                    className={`shrink-0 flex items-center justify-center px-3 py-1.5 rounded-lg border border-outline-variant/30 transition-colors ${
-                      downloadingId === file.id
-                        ? 'bg-surface-variant text-on-surface-variant cursor-not-allowed opacity-70'
-                        : 'bg-surface-container-high hover:bg-surface-variant text-on-surface-variant hover:text-on-surface'
-                    }`}
-                    title="이 파일을 로컬로 다운로드합니다"
-                  >
-                    {downloadingId === file.id ? (
-                      <span className="material-symbols-outlined animate-spin text-[16px]">refresh</span>
+                    {isDownloading ? (
+                      <button
+                        onClick={stopDownload}
+                        className="shrink-0 flex items-center justify-center px-3 py-1.5 rounded-lg border border-error/30 bg-error/10 text-error hover:bg-error/20 transition-colors"
+                        title="다운로드를 취소합니다"
+                      >
+                        <span className="material-symbols-outlined text-[16px] mr-1">stop</span>
+                        <span className="text-[12px] font-medium whitespace-nowrap">정지</span>
+                      </button>
                     ) : (
-                      <span className="text-[12px] font-medium whitespace-nowrap">다운로드</span>
+                      <button
+                        onClick={() => confirmDownload(file)}
+                        disabled={!!downloadingId}
+                        className={`shrink-0 flex items-center justify-center px-3 py-1.5 rounded-lg border border-outline-variant/30 transition-colors ${
+                          downloadingId
+                            ? 'bg-surface-variant text-on-surface-variant cursor-not-allowed opacity-70'
+                            : 'bg-surface-container-high hover:bg-surface-variant text-on-surface-variant hover:text-on-surface'
+                        }`}
+                        title="이 파일을 로컬로 다운로드합니다"
+                      >
+                        <span className="text-[12px] font-medium whitespace-nowrap">다운로드</span>
+                      </button>
                     )}
-                  </button>
+                  </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>
+        {/* Confirmation Overlay */}
+        {selectedForDownload && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-dim/80 backdrop-blur-sm p-4 rounded-2xl">
+            <div className="bg-surface-container-highest w-full max-w-sm rounded-xl p-6 shadow-2xl flex flex-col gap-4 border border-outline-variant/30">
+              <div className="flex items-center gap-3 text-primary">
+                <span className="material-symbols-outlined text-3xl">download</span>
+                <h3 className="text-headline-sm font-bold">다운로드 확인</h3>
+              </div>
+              <div className="flex flex-col gap-1 my-2">
+                <p className="text-body-md text-on-surface break-all font-medium">
+                  {selectedForDownload.name}
+                </p>
+                {selectedForDownload.size ? (
+                  <p className="text-label-md text-on-surface-variant">
+                    크기: {formatBytes(selectedForDownload.size)}
+                  </p>
+                ) : (
+                  <p className="text-label-md text-on-surface-variant">
+                    (구글 워크스페이스 포맷은 다운로드 완료 후 용량이 결정됩니다)
+                  </p>
+                )}
+              </div>
+              <p className="text-body-sm text-on-surface-variant mb-2">이 파일을 기기에 다운로드 하시겠습니까?</p>
+              <div className="flex justify-end gap-2">
+                <button 
+                  onClick={cancelDownloadPrompt}
+                  className="px-4 py-2 rounded-lg text-label-md font-medium text-on-surface-variant hover:bg-surface-variant transition-colors"
+                >
+                  취소
+                </button>
+                <button 
+                  onClick={handleDownload}
+                  className="px-4 py-2 rounded-lg text-label-md font-medium bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm"
+                >
+                  확인
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
