@@ -81,7 +81,10 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
       <div className="bg-surface dark:bg-surface-dim w-full max-w-lg rounded-2xl shadow-xl flex flex-col max-h-[80vh] overflow-hidden">
         <div className="p-4 border-b border-outline-variant/30 bg-surface-container-low shrink-0 flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <h2 className="text-headline-md font-headline-md text-on-surface">폴더 선택</h2>
+            <h2 className="text-headline-md font-headline-md text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary icon-fill">folder</span>
+              폴더 선택
+            </h2>
             <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-variant transition-colors">
               <span className="material-symbols-outlined">close</span>
             </button>
@@ -158,7 +161,7 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
                     </button>
                     <button
                       onClick={() => navigateTo(folder)}
-                      className="flex-1 flex items-center gap-3 p-2.5 text-left bg-surface-container-lowest hover:bg-surface-variant rounded-lg border border-outline-variant/30 transition-colors"
+                      className="flex-1 min-w-0 flex items-center gap-3 p-2.5 text-left bg-surface-container-lowest hover:bg-surface-variant rounded-lg border border-outline-variant/30 transition-colors"
                     >
                       <span className={`material-symbols-outlined text-[20px] ${hasChildren ? 'text-primary' : 'text-outline'}`}>
                         {hasChildren ? 'folder' : 'folder_open'}
