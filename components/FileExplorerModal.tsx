@@ -356,46 +356,46 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
             </ul>
           )}
         </div>
-        {/* Confirmation Overlay */}
-        {selectedForDownload && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-dim/80 backdrop-blur-sm p-4 rounded-2xl">
-            <div className="bg-surface-container-highest w-full max-w-sm rounded-xl p-6 shadow-2xl flex flex-col gap-4 border border-outline-variant/30">
-              <div className="flex flex-col items-center gap-2 text-primary mb-2">
-                <span className="material-symbols-outlined text-4xl">download</span>
-                <h3 className="text-headline-sm font-bold">다운로드 확인</h3>
-              </div>
-              <div className="flex flex-col gap-2 my-2 text-center">
-                <p className="text-title-md text-primary break-all font-bold bg-primary/10 py-3 px-4 rounded-lg border border-primary/20">
-                  {selectedForDownload.name}
-                </p>
-                <p className="text-label-md text-on-surface-variant font-medium">
-                  ({selectedForDownload.size ? formatBytes(selectedForDownload.size) : "구글 워크스페이스 포맷은 다운로드 완료 후 용량이 결정됩니다"})
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 w-full mt-2">
-                <button 
-                  onClick={handleDownload}
-                  className="w-full py-3 rounded-lg text-label-lg font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm"
-                >
-                  기본 다운로드
-                </button>
-                <button 
-                  onClick={handleNativeDownload}
-                  className="w-full py-3 rounded-lg text-label-lg font-bold bg-surface-container-high text-on-surface hover:bg-surface-variant border border-outline-variant/30 transition-colors"
-                >
-                  브라우저 다운로드 (대용량)
-                </button>
-                <button 
-                  onClick={cancelDownloadPrompt}
-                  className="w-full py-3 rounded-lg text-label-lg font-bold text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors"
-                >
-                  취소
-                </button>
-              </div>
+      </div>
+      {/* Confirmation Overlay */}
+      {selectedForDownload && (
+        <div className="absolute inset-0 z-[110] flex items-center justify-center bg-surface-dim/80 backdrop-blur-sm p-4">
+          <div className="bg-surface-container-highest w-full max-w-sm rounded-xl p-6 shadow-2xl flex flex-col gap-4 border border-outline-variant/30">
+            <div className="flex flex-col items-center gap-2 text-primary mb-2">
+              <span className="material-symbols-outlined text-4xl">download</span>
+              <h3 className="text-headline-sm font-bold">다운로드 확인</h3>
+            </div>
+            <div className="flex flex-col gap-2 my-2 text-center">
+              <p className="text-title-md text-primary break-all font-bold bg-primary/10 py-3 px-4 rounded-lg border border-primary/20">
+                {selectedForDownload.name}
+              </p>
+              <p className="text-label-md text-on-surface-variant font-medium">
+                ({selectedForDownload.size ? formatBytes(selectedForDownload.size) : "구글 워크스페이스 포맷은 다운로드 완료 후 용량이 결정됩니다"})
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 w-full mt-2">
+              <button 
+                onClick={handleDownload}
+                className="w-full py-3 rounded-lg text-label-lg font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                기본 다운로드
+              </button>
+              <button 
+                onClick={handleNativeDownload}
+                className="w-full py-3 rounded-lg text-label-lg font-bold bg-surface-container-high text-on-surface hover:bg-surface-variant border border-outline-variant/30 transition-colors"
+              >
+                브라우저 다운로드 (대용량)
+              </button>
+              <button 
+                onClick={cancelDownloadPrompt}
+                className="w-full py-3 rounded-lg text-label-lg font-bold text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors"
+              >
+                취소
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
