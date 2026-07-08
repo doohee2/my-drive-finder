@@ -1,3 +1,3 @@
 export const APP_CONFIG = {
-  lastModifiedText: "2026.7.5. by doohee2"
+  lastModifiedText: "2026.7.8. by doohee2"
 };

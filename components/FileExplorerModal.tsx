@@ -118,6 +118,84 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
     setSelectedForDownload(null);
   };
 
+  const handleDirectDownload = async () => {
+    if (!selectedForDownload || downloadingId) return;
+    const file = selectedForDownload;
+    
+    if (!session?.accessToken) {
+      alert("액세스 토큰이 없습니다. 다시 로그인해 주세요.");
+      return;
+    }
+
+    setDownloadingId(file.id);
+    setSelectedForDownload(null);
+    setDownloadProgress(0);
+    
+    const controller = new AbortController();
+    setAbortController(controller);
+    
+    try {
+      let url = "";
+      let finalName = file.name;
+      
+      if (file.mimeType === 'application/vnd.google-apps.spreadsheet') {
+        url = `https://www.googleapis.com/drive/v3/files/${file.id}/export?mimeType=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`;
+        if (!finalName.endsWith('.xlsx')) finalName += '.xlsx';
+      } else {
+        url = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`;
+        if (file.mimeType === 'application/vnd.google-apps.document' && !finalName.endsWith('.docx')) finalName += '.docx';
+        if (file.mimeType === 'application/vnd.google-apps.presentation' && !finalName.endsWith('.pptx')) finalName += '.pptx';
+      }
+
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`
+        },
+        signal: controller.signal
+      });
+      
+      if (!res.ok) throw new Error("다이렉트 다운로드에 실패했습니다.");
+      
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("스트림을 읽을 수 없습니다.");
+      
+      const chunks = [];
+      let receivedLength = 0;
+      
+      while(true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+          receivedLength += value.length;
+          setDownloadProgress(receivedLength);
+        }
+      }
+      
+      const blob = new Blob(chunks);
+      const objectUrl = window.URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = finalName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(objectUrl);
+      
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        alert("다운로드가 취소되었습니다.");
+      } else {
+        alert(err.message);
+      }
+    } finally {
+      setDownloadingId(null);
+      setDownloadProgress(0);
+      setAbortController(null);
+    }
+  };
+
   const handleDownload = async () => {
     if (!selectedForDownload || downloadingId) return;
     const file = selectedForDownload;
@@ -376,15 +454,21 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
             <div className="flex flex-col gap-2 w-full mt-2">
               <button 
                 onClick={handleDownload}
-                className="w-full py-3 rounded-lg text-label-lg font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm"
+                className="w-full py-3 rounded-lg text-label-lg font-bold bg-surface-container-high text-on-surface hover:bg-surface-variant border border-outline-variant/30 transition-colors"
               >
-                기본 다운로드
+                일반 다운로드 (Proxy)
               </button>
               <button 
                 onClick={handleNativeDownload}
                 className="w-full py-3 rounded-lg text-label-lg font-bold bg-surface-container-high text-on-surface hover:bg-surface-variant border border-outline-variant/30 transition-colors"
               >
-                브라우저 다운로드 (대용량)
+                브라우저 다운로드 (Proxy, 백그라운드)
+              </button>
+              <button 
+                onClick={handleDirectDownload}
+                className="w-full py-3 rounded-lg text-label-lg font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                다이렉트 다운로드 (Google API)
               </button>
               <button 
                 onClick={cancelDownloadPrompt}
