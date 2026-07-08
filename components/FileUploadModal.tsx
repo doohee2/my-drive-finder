@@ -12,7 +12,7 @@ interface FileUploadModalProps {
 
 export function FileUploadModal({ isOpen, onClose, file, targetFolder }: FileUploadModalProps) {
   const { data: session } = useSession();
-  const [uploadingMode, setUploadingMode] = useState<'proxy' | 'direct' | null>(null);
+  const [uploadingMode, setUploadingMode] = useState<'proxy' | 'direct' | 'completed' | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
@@ -73,17 +73,16 @@ export function FileUploadModal({ isOpen, onClose, file, targetFolder }: FileUpl
         xhr.send(formData);
       });
       
-      alert("업로드가 완료되었습니다.");
-      onClose();
+      setUploadingMode('completed');
     } catch (err: any) {
       if (err.message === 'AbortError' || err.name === 'AbortError') {
-        alert("업로드가 취소되었습니다.");
+        // 취소된 경우 조용히 처리하거나 알림 후 리셋
       } else {
         alert("오류: " + err.message);
       }
-    } finally {
       setUploadingMode(null);
       setUploadProgress(0);
+    } finally {
       setAbortController(null);
     }
   };
@@ -151,37 +150,39 @@ export function FileUploadModal({ isOpen, onClose, file, targetFolder }: FileUpl
         xhr.send(file);
       });
       
-      alert("업로드가 완료되었습니다.");
-      onClose();
+      setUploadingMode('completed');
     } catch (err: any) {
       if (err.message === 'AbortError' || err.name === 'AbortError') {
-        alert("업로드가 취소되었습니다.");
+        // 취소된 경우 조용히 리셋
       } else {
         alert("오류: " + err.message);
       }
-    } finally {
       setUploadingMode(null);
       setUploadProgress(0);
+    } finally {
       setAbortController(null);
     }
   };
 
-  const renderButtonContent = (mode: 'proxy' | 'direct', text: string) => {
-    const isThisMode = uploadingMode === mode;
-    if (!isThisMode) return text;
+  const renderButtonContent = (mode: 'proxy' | 'direct' | 'completed', text: string) => {
+    const isThisMode = uploadingMode === mode || (uploadingMode === 'completed' && mode === 'completed');
+    if (!isThisMode && uploadingMode !== 'completed') return text;
     
     const percent = file.size > 0 ? Math.min(100, Math.round((uploadProgress / file.size) * 100)) : 100;
+    const isCompleted = uploadingMode === 'completed';
+    const displayPercent = isCompleted ? 100 : percent;
+    const displayProgress = isCompleted ? file.size : uploadProgress;
     
     return (
       <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-lg">
         <div 
-          className={`absolute left-0 top-0 bottom-0 transition-all duration-300 ease-out ${mode === 'direct' ? 'bg-black/20 dark:bg-white/20' : 'bg-primary/20'}`} 
-          style={{ width: `${percent}%` }}
+          className={`absolute left-0 top-0 bottom-0 transition-all duration-300 ease-out ${isCompleted ? 'bg-primary/20' : (mode === 'direct' ? 'bg-black/20 dark:bg-white/20' : 'bg-primary/20')}`} 
+          style={{ width: `${displayPercent}%` }}
         />
         <span className="relative z-10 flex items-center gap-2">
-          {text} ({percent}%)
+          {isCompleted ? '업로드 완료' : text} ({displayPercent}%)
           <span className="text-[11px] font-normal opacity-80">
-            {formatBytes(uploadProgress)} / {formatBytes(file.size)}
+            {formatBytes(displayProgress)} / {formatBytes(file.size)}
           </span>
         </span>
       </div>
@@ -219,13 +220,27 @@ export function FileUploadModal({ isOpen, onClose, file, targetFolder }: FileUpl
         
         <div className="flex flex-col gap-2 w-full mt-2">
           {uploadingMode ? (
-             <button
-               onClick={stopUpload}
-               className="w-full py-3 rounded-lg text-label-lg font-bold border border-error/30 bg-error/10 text-error hover:bg-error/20 transition-colors flex items-center justify-center gap-2"
-             >
-               <span className="material-symbols-outlined text-[18px]">stop</span>
-               업로드 취소
-             </button>
+             uploadingMode === 'completed' ? (
+               <button
+                 onClick={() => {
+                   setUploadingMode(null);
+                   setUploadProgress(0);
+                   onClose();
+                 }}
+                 className="w-full py-3 rounded-lg text-label-lg font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 shadow-sm"
+               >
+                 <span className="material-symbols-outlined text-[18px]">check</span>
+                 완료
+               </button>
+             ) : (
+               <button
+                 onClick={stopUpload}
+                 className="w-full py-3 rounded-lg text-label-lg font-bold border border-error/30 bg-error/10 text-error hover:bg-error/20 transition-colors flex items-center justify-center gap-2"
+               >
+                 <span className="material-symbols-outlined text-[18px]">stop</span>
+                 취소
+               </button>
+             )
           ) : (
             <>
               <button 
@@ -256,9 +271,9 @@ export function FileUploadModal({ isOpen, onClose, file, targetFolder }: FileUpl
           
           {uploadingMode && (
             <div className="mt-4 h-12 rounded-lg bg-surface-container-low border border-outline-variant/30 relative overflow-hidden">
-              {uploadingMode === 'proxy' 
-                ? renderButtonContent('proxy', '일반 업로드 진행 중') 
-                : renderButtonContent('direct', '다이렉트 업로드 진행 중')}
+              {uploadingMode === 'completed' 
+                ? renderButtonContent('completed', '업로드 완료') 
+                : renderButtonContent(uploadingMode, '진행 중')}
             </div>
           )}
         </div>

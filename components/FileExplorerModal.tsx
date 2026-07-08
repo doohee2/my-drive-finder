@@ -303,21 +303,23 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
           </div>
           
           {/* Breadcrumbs */}
-          {!error && session && pathStack.length > 1 && (
-            <div className="flex flex-wrap items-center gap-1 overflow-hidden">
-              {pathStack.map((step, idx) => (
-                <div key={step.id} className="flex items-center shrink-0">
-                  <button
-                    onClick={() => navigateUpTo(idx)}
-                    className={`text-body-sm font-medium hover:underline ${idx === pathStack.length - 1 ? 'text-on-surface' : 'text-on-surface-variant hover:text-primary'}`}
-                  >
-                    {step.name}
-                  </button>
-                  {idx < pathStack.length - 1 && (
-                    <span className="material-symbols-outlined text-outline-variant text-sm mx-1">chevron_right</span>
-                  )}
-                </div>
-              ))}
+          {!error && session && (
+            <div className="flex items-center overflow-hidden w-full pt-2">
+              <div className="flex flex-wrap items-center gap-1 overflow-hidden flex-1 bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-3 py-1.5">
+                {pathStack.map((step, idx) => (
+                  <div key={step.id} className="flex items-center shrink-0">
+                    <button
+                      onClick={() => navigateUpTo(idx)}
+                      className={`text-body-sm font-medium hover:underline ${idx === pathStack.length - 1 ? 'text-on-surface font-bold' : 'text-on-surface-variant hover:text-primary'}`}
+                    >
+                      {step.name}
+                    </button>
+                    {idx < pathStack.length - 1 && (
+                      <span className="material-symbols-outlined text-outline-variant text-sm mx-1">chevron_right</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

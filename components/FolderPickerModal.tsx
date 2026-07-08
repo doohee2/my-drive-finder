@@ -90,22 +90,42 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
             </button>
           </div>
           
-          {/* Breadcrumbs */}
-          {!loading && !error && session && pathStack.length > 1 && (
-            <div className="flex flex-wrap items-center gap-1 overflow-hidden">
-              {pathStack.map((step, idx) => (
-                <div key={step.id} className="flex items-center shrink-0">
-                  <button
-                    onClick={() => navigateUpTo(idx)}
-                    className={`text-body-sm font-medium hover:underline ${idx === pathStack.length - 1 ? 'text-on-surface' : 'text-on-surface-variant hover:text-primary'}`}
-                  >
-                    {step.name}
-                  </button>
-                  {idx < pathStack.length - 1 && (
-                    <span className="material-symbols-outlined text-outline-variant text-sm mx-1">chevron_right</span>
-                  )}
-                </div>
-              ))}
+          {/* Breadcrumbs with Select Button */}
+          {!loading && !error && session && (
+            <div className="flex items-center gap-2 overflow-hidden w-full pt-2">
+              <button
+                onClick={() => {
+                  const currentFolder = pathStack[pathStack.length - 1];
+                  const fullPath = pathStack.map(p => p.name).join(' / ');
+                  onSelectFolder({ 
+                    id: currentFolder.id, 
+                    name: currentFolder.name, 
+                    parentId: pathStack.length > 1 ? pathStack[pathStack.length - 2].id : 'root', 
+                    fullPath 
+                  });
+                  onClose();
+                }}
+                className="shrink-0 flex items-center justify-center bg-surface-container-high hover:bg-surface-variant text-on-surface-variant hover:text-on-surface px-3 py-1.5 rounded-lg border border-outline-variant/30 transition-colors"
+                title="현재 위치의 폴더를 선택합니다"
+              >
+                <span className="text-[12px] font-medium whitespace-nowrap">선택</span>
+              </button>
+              
+              <div className="flex flex-wrap items-center gap-1 overflow-hidden flex-1 bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-3 py-1.5">
+                {pathStack.map((step, idx) => (
+                  <div key={step.id} className="flex items-center shrink-0">
+                    <button
+                      onClick={() => navigateUpTo(idx)}
+                      className={`text-body-sm font-medium hover:underline ${idx === pathStack.length - 1 ? 'text-on-surface font-bold' : 'text-on-surface-variant hover:text-primary'}`}
+                    >
+                      {step.name}
+                    </button>
+                    {idx < pathStack.length - 1 && (
+                      <span className="material-symbols-outlined text-outline-variant text-sm mx-1">chevron_right</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
