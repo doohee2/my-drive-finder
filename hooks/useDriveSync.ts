@@ -96,10 +96,10 @@ export function useDriveSync(folderId?: string | null) {
               rows = result.data.map((r: any) => ({ ...r, _sheetName: "CSV" }));
             } else {
               // Excel file or Google Sheet exported as Excel
-              const workbook = XLSX.read(buffer, { type: "array" });
+              const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
               for (const sheetName of workbook.SheetNames) {
                 const worksheet = workbook.Sheets[sheetName];
-                const sheetRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                const sheetRows = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: false, dateNF: "yyyy-mm-dd hh:mm:ss" });
                 rows.push(...sheetRows.map((r: any) => ({ ...r, _sheetName: sheetName })));
               }
             }
