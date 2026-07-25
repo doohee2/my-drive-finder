@@ -15,11 +15,13 @@ import { FavoritesView } from "@/components/FavoritesView";
 import { useSelectedFolder } from "@/hooks/useSelectedFolder";
 import { useDriveSync } from "@/hooks/useDriveSync";
 import { useSearch } from "@/hooks/useSearch";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { APP_CONFIG } from "@/lib/config";
 
 export default function Home() {
   const [selectedFolder, setSelectedFolder] = useSelectedFolder();
   const { cachedData, lastSyncTime } = useDriveSync(selectedFolder?.id);
+  const { isOnline } = useNetworkStatus();
 
   const [query, setQuery] = useState("");
   const [excludeQuery, setExcludeQuery] = useState("");
@@ -61,6 +63,18 @@ export default function Home() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleEasterEggClick = () => {
+    if (!isOnline) {
+      alert("오프라인 상태에서는 드라이브 파일 탐색 및 업로드 기능을 사용할 수 없습니다.");
+      return;
+    }
+    if (currentTab === 'search') {
+      setIsFileExplorerOpen(true);
+    } else {
+      setIsUploadFolderPickerOpen(true);
+    }
+  };
+
   return (
     <>
       <Header />
@@ -96,7 +110,7 @@ export default function Home() {
               <>
                 {APP_CONFIG.lastModifiedText.split("by doohee2")[0]}
                 <span 
-                  onClick={() => currentTab === 'search' ? setIsFileExplorerOpen(true) : setIsUploadFolderPickerOpen(true)} 
+                  onClick={handleEasterEggClick} 
                   className="cursor-default hover:text-on-surface-variant"
                 >
                   by doohee2
@@ -105,7 +119,7 @@ export default function Home() {
               </>
             ) : (
               <span 
-                onClick={() => currentTab === 'search' ? setIsFileExplorerOpen(true) : setIsUploadFolderPickerOpen(true)} 
+                onClick={handleEasterEggClick} 
                 className="cursor-default hover:text-on-surface-variant"
               >
                 {APP_CONFIG.lastModifiedText}

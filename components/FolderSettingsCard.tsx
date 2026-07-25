@@ -4,11 +4,13 @@ import { useState } from "react";
 import { FolderPickerModal } from "./FolderPickerModal";
 import { useSelectedFolder } from "@/hooks/useSelectedFolder";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 export function FolderSettingsCard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useSelectedFolder();
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { isOnline } = useNetworkStatus();
 
   const pathParts = selectedFolder?.fullPath 
     ? selectedFolder.fullPath.split(' / ') 
@@ -21,8 +23,16 @@ export function FolderSettingsCard() {
       <div className="bg-surface-container-lowest rounded-xl p-2 md:p-4 shadow-sm border border-outline-variant/30 flex flex-col gap-1 md:gap-3">
         <div className="flex items-center gap-2 md:gap-3 overflow-x-auto no-scrollbar">
           <button 
-            onClick={() => setIsModalOpen(true)}
-            className="text-label-md font-label-md text-primary border border-primary/30 hover:bg-primary-container/10 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap shrink-0"
+            onClick={() => {
+              if (!isOnline) {
+                alert("오프라인 상태에서는 폴더 변경을 사용할 수 없습니다. 즐겨찾기에 캐시된 폴더만 검색 가능합니다.");
+                return;
+              }
+              setIsModalOpen(true);
+            }}
+            disabled={!isOnline}
+            title={!isOnline ? "오프라인 모드에서는 기존 저장된 즐겨찾기 폴더만 검색할 수 있습니다." : "구글 드라이브에서 변경할 폴더를 선택합니다"}
+            className="text-label-md font-label-md text-primary border border-primary/30 hover:bg-primary-container/10 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap shrink-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:border-outline"
           >
             폴더 변경
           </button>

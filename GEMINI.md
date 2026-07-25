@@ -35,8 +35,9 @@
 ### 📁 Frontend (Hooks & Components)
 - `app/page.tsx`: 앱의 메인 레이아웃 오케스트레이터. 전역 상태(검색어, 활성 탭)를 관리하며, 하단 Footer 텍스트 클릭 시 숨겨진 파일 탐색기를 여는 이스터에그 트리거 포함.
 - `lib/config.ts`: 애플리케이션 전역 설정(예: 검색 화면 최하단의 업데이트 안내 텍스트 등)을 상수로 분리하여 중앙 집중식으로 관리하는 설정 파일
-- `hooks/useDriveSync.ts`: 핵심적인 **증분 동기화 로직** 및 엑셀/구글 시트의 **다중 시트(Multi-sheet) 파싱**을 처리. API 할당량(Quota) 보호를 위한 30초 쿨타임(Cooldown) 로직 포함.
+- `hooks/useDriveSync.ts`: 핵심적인 **증분 동기화 로직** 및 엑셀/구글 시트의 **다중 시트(Multi-sheet) 파싱**을 처리. API 할당량(Quota) 보호를 위한 30초 쿨타임(Cooldown), 오프라인 통신 차단 및 5초 타임아웃(`AbortSignal.timeout`) 로직 포함.
 - `hooks/useSearch.ts`: 로컬 캐시 데이터를 기반으로 한 **고속 텍스트 필터링 알고리즘** 담당
+- `hooks/useNetworkStatus.ts`: `window.addEventListener('online'/'offline')`을 통해 실시간으로 네트워크 연결 상태를 감지하는 커스텀 훅
 - `components/FolderPickerModal.tsx`: 계층형 폴더 구조를 탐색(Breadcrumbs)하고 동기화 및 업로드 타겟을 선택하는 팝업 모달. 루트부터 이어지는 전체 경로 표시 및 경로 직접 선택(선택 버튼) 기능 포함.
 - `components/FileExplorerModal.tsx`: Google Picker 없이 자체적으로 구글 드라이브 파일을 탐색하고 직접 로컬로 다운로드할 수 있는 숨겨진 탐색기 모달 창. 다이렉트 다운로드(Google API) 기능 및 전체 경로 표시 지원.
 - `components/FileUploadModal.tsx`: 로컬 파일을 선택하여 구글 드라이브의 특정 폴더로 업로드할 수 있는 신규 모달. 일반 프록시 업로드와 다이렉트 업로드(Google API) 방식을 모두 지원하며 실시간 퍼센트 게이지 표시 기능을 포함.
@@ -46,6 +47,11 @@
   - **결과 내보내기**: 필터링된 현재 화면의 데이터를 단일 `.xlsx` 형식으로 내보내는 기능(`handleExport`) 포함.
 
 ## 5. 최근 업데이트 및 주요 기능
+- **오프라인 최우선(Offline-First) PWA 아키텍처 개편**: 0.1초 컷으로 즉시 화면이 뜨는 오프라인 PWA 사용 경험을 구현했습니다.
+  - **Serwist 커스텀 캐시 전략 (`sw.ts`)**: Serwist 기본 매칭 규칙(`defaultCache`)의 `NetworkOnly` 강제 버그를 차단하기 위해 커스텀 캐치올(catch-all)을 작성했습니다. 정적 자산(JS/CSS/이미지/폰트)은 `CacheFirst`, HTML 문서와 Next.js RSC(`_rsc`)는 `StaleWhileRevalidate`를 강제 적용하며, `navigationPreload: false`로 렌더링 지연을 차단했습니다.
+  - **iOS Safari PWA Standalone 지원**: `layout.tsx` 내 `appleWebApp` 메타데이터 추가 및 `SessionProvider`의 잦은 백그라운드 요청(`refetchInterval={0}`, `refetchOnWindowFocus={false}`)을 방지하여 오프라인 시 iOS Safari 화면 프리징을 완벽 해결했습니다.
+  - **오프라인 기능 방어 로직**: 상단바에 시각적 오프라인 아이콘(☁️✕)을 즉시 표시하며, 오프라인 시 [구글 로그인/로그아웃], [동기화], [폴더 변경], [이스터에그 탐색기 및 업로드 모달]을 자동으로 활성 불가능하게 잠가, 이미 저장된 즐겨찾기 목록 캐시의 텍스트 검색에 집중하도록 개선했습니다.
+  - **수동 서비스 워커 캐시 초기화 기능**: 상단 안내(Info) 모달 내에 `navigator.serviceWorker.getRegistrations()` 및 `caches.keys()`를 활용하여 기존 SW 캐시를 지우고 즉시 강제로 최신 버전을 새로고침하는 기능 버튼을 탑재했습니다.
 - **고급 파일 다운로드 기능**: `FileExplorerModal`에 파일명 및 용량을 확인할 수 있는 '다운로드 확인 팝업'을 추가했습니다. 모바일 기기의 메모리 한계를 극복하고 대역폭 제약을 피하기 위해 다운로드 방식을 세 가지로 세분화했습니다:
   1. **일반 다운로드 (Proxy)**: Vercel 서버를 경유하는 자바스크립트 스트림 다운로드 방식으로 실시간 취소 및 게이지 표시를 지원합니다.
   2. **브라우저 다운로드 (Proxy, 백그라운드)**: `Content-Disposition` 헤더 처리를 통해 네이티브 브라우저의 다운로드 관리자로 처리하여 500MB 이상의 파일도 모바일 사파리 등에서 끊김 없이 저장할 수 있습니다.

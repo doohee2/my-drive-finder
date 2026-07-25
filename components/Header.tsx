@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useSelectedFolder } from "@/hooks/useSelectedFolder";
 import { useDriveSync } from "@/hooks/useDriveSync";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -14,6 +15,7 @@ export function Header() {
 
   const [selectedFolder] = useSelectedFolder();
   const { isSyncing, syncProgress, lastSyncTime, sync } = useDriveSync(selectedFolder?.id);
+  const { isOnline } = useNetworkStatus();
 
   useEffect(() => {
     setMounted(true);
@@ -21,6 +23,29 @@ export function Header() {
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  const handleForceUpdate = async () => {
+    if (window.confirm("서비스 워커 캐시를 초기화하고 최신 버전으로 새로고침 하시겠습니까?")) {
+      try {
+        if ("serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const reg of registrations) {
+            await reg.unregister();
+          }
+        }
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          for (const key of keys) {
+            await caches.delete(key);
+          }
+        }
+        window.location.reload();
+      } catch (e) {
+        console.error("Cache clear error:", e);
+        window.location.reload();
+      }
+    }
   };
 
   return (
@@ -48,6 +73,12 @@ export function Header() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 ml-auto">
+            {!isOnline && (
+              <div className="flex items-center justify-center p-1.5 text-error" title="오프라인 모드 (로컬 즐겨찾기 캐시만 검색 가능)">
+                <span className="material-symbols-outlined text-[24px]">cloud_off</span>
+              </div>
+            )}
+
             {selectedFolder && (
               <div className="hidden md:flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant bg-surface-container-highest px-3 py-1.5 rounded-full">
                 {isSyncing ? (
@@ -80,9 +111,10 @@ export function Header() {
             </button>
 
             <button
-              onClick={() => sync()}
-              disabled={!selectedFolder || isSyncing}
-              className="text-on-surface-variant hover:bg-surface-variant/50 p-2 rounded-full transition-colors flex items-center justify-center disabled:opacity-50"
+              onClick={() => isOnline && sync()}
+              disabled={!selectedFolder || isSyncing || !isOnline}
+              title={!isOnline ? "오프라인 상태에서는 동기화할 수 없습니다" : "데이터 동기화"}
+              className="text-on-surface-variant hover:bg-surface-variant/50 p-2 rounded-full transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <span className={`material-symbols-outlined ${isSyncing ? "animate-spin" : ""}`} data-icon="sync">
                 sync
@@ -91,9 +123,10 @@ export function Header() {
 
             {session ? (
               <button
-                onClick={() => signOut()}
-                className="text-on-surface-variant hover:bg-surface-variant/50 p-1.5 rounded-full transition-colors flex items-center justify-center overflow-hidden ml-1"
-                title="로그아웃"
+                onClick={() => isOnline && signOut()}
+                disabled={!isOnline}
+                className="text-on-surface-variant hover:bg-surface-variant/50 p-1.5 rounded-full transition-colors flex items-center justify-center overflow-hidden ml-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                title={!isOnline ? "오프라인 상태에서는 로그아웃할 수 없습니다" : "로그아웃"}
               >
                 <img
                   alt="User profile"
@@ -103,9 +136,10 @@ export function Header() {
               </button>
             ) : (
               <button
-                onClick={() => signIn("google")}
-                className="text-on-surface-variant hover:bg-surface-variant/50 p-2 rounded-full transition-colors flex items-center justify-center ml-1"
-                title="로그인"
+                onClick={() => isOnline && signIn("google")}
+                disabled={!isOnline}
+                className="text-on-surface-variant hover:bg-surface-variant/50 p-2 rounded-full transition-colors flex items-center justify-center ml-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                title={!isOnline ? "오프라인 상태에서는 로그인할 수 없습니다" : "로그인"}
               >
                 <span className="material-symbols-outlined text-[24px]">account_circle</span>
               </button>
@@ -130,13 +164,22 @@ export function Header() {
             <p className="text-body-md font-body-md text-on-surface-variant leading-relaxed">
               My Drive Finder 페이지는 구글 드라이브의 특정 폴더를 지정해서 해당 폴더의 csv, xlsx 파일의 내용을 검색하는 반응형 웹 기반 앱입니다. 현재 테스트 계정으로 등록된 사용자만 이용할 수 있습니다.
             </p>
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex flex-col gap-2">
               <button
-                onClick={() => setIsInfoOpen(false)}
-                className="bg-primary hover:bg-primary/90 text-on-primary px-4 py-2 rounded-lg text-label-md font-medium transition-colors"
+                onClick={handleForceUpdate}
+                className="w-full bg-surface-container-high hover:bg-surface-variant text-on-surface border border-outline-variant/50 px-4 py-2.5 rounded-lg text-label-md font-medium transition-colors flex items-center justify-center gap-2"
               >
-                확인
+                <span className="material-symbols-outlined text-[18px]">update</span>
+                캐시 비우고 최신 버전으로 업데이트
               </button>
+              <div className="flex justify-end mt-1">
+                <button
+                  onClick={() => setIsInfoOpen(false)}
+                  className="bg-primary hover:bg-primary/90 text-on-primary px-4 py-2 rounded-lg text-label-md font-medium transition-colors"
+                >
+                  확인
+                </button>
+              </div>
             </div>
           </div>
         </div>

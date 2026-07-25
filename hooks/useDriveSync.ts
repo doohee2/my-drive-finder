@@ -45,6 +45,11 @@ export function useDriveSync(folderId?: string | null) {
     mutationFn: async () => {
       if (!folderId) return;
 
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        alert("현재 오프라인 상태입니다. 인터넷 연결을 확인해주세요.");
+        return;
+      }
+
       // Cooldown check
       const lastSyncStr = await localforage.getItem<string>(`lastSync_${folderId}`);
       if (lastSyncStr) {
@@ -61,7 +66,9 @@ export function useDriveSync(folderId?: string | null) {
 
       try {
         // 1. Fetch remote file metadata
-        const res = await fetch(`/api/drive/files?folderId=${folderId}`);
+        const res = await fetch(`/api/drive/files?folderId=${folderId}`, {
+          signal: AbortSignal.timeout(5000),
+        });
         if (!res.ok) throw new Error("Failed to fetch file list");
         const { files } = (await res.json()) as { files: DriveFile[] };
 
@@ -73,6 +80,10 @@ export function useDriveSync(folderId?: string | null) {
         let hasChanges = false;
 
         for (let i = 0; i < files.length; i++) {
+          if (typeof navigator !== "undefined" && !navigator.onLine) {
+            console.warn("오프라인 전환 감지: 동기화 작업을 중지합니다.");
+            break;
+          }
           const file = files[i];
           const localModified = localMetadata[file.id];
 
@@ -81,7 +92,9 @@ export function useDriveSync(folderId?: string | null) {
             hasChanges = true;
             setSyncProgress(`다운로드 중... (${i + 1}/${files.length}) ${file.name}`);
 
-            const dlRes = await fetch(`/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}`);
+            const dlRes = await fetch(`/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}`, {
+              signal: AbortSignal.timeout(5000),
+            });
             if (!dlRes.ok) {
               console.error(`Failed to download ${file.name}`);
               continue;
