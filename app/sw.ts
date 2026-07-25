@@ -11,7 +11,7 @@ declare const self: ServiceWorkerGlobalScope;
 
 // 오프라인 상태에서 캐시 미스 시 Uncaught FetchEvent Promise Rejection 에러를 방지하는 에러 핸들러 플러그인
 const offlineFallbackPlugin = {
-  handlerDidError: async ({ request }) => {
+  handlerDidError: async ({ request }: { request: Request }): Promise<Response | undefined> => {
     // 1. 네비게이션(페이지 이동) 실패 시 로컬에 저장된 '/' 혹은 fallback 응답 제공
     if (request.mode === "navigate") {
       const cachedRoot = (await caches.match("/")) || (await caches.match("/index.html"));
