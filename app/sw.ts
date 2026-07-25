@@ -9,19 +9,37 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-// 오프라인 상태에서 캐시 미스 시 Uncaught FetchEvent Promise Rejection 에러를 방지하는 에러 핸들러 플러그인
+// 오프라인 상태에서 캐시 미스 시 Uncaught FetchEvent Promise Rejection 에러 및 첫화면 블로킹을 방지하는 플러그인
 const offlineFallbackPlugin = {
   handlerDidError: async ({ request }: { request: Request }): Promise<Response | undefined> => {
-    // 1. 네비게이션(페이지 이동) 실패 시 로컬에 저장된 '/' 혹은 fallback 응답 제공
+    // 1. 네비게이션(페이지 이동) 실패 시 로컬에 저장된 Root 및 HTML 문서 반환 (Vary 헤더 및 쿼리스트링 무시)
     if (request.mode === "navigate") {
-      const cachedRoot = (await caches.match("/")) || (await caches.match("/index.html"));
+      const matchOptions = { ignoreSearch: true, ignoreVary: true };
+      let cachedRoot =
+        (await caches.match(request, matchOptions)) ||
+        (await caches.match("/", matchOptions)) ||
+        (await caches.match("/index.html", matchOptions));
+
+      // 그래도 못 찾은 경우, 저장된 전체 캐시 저장소를 순회하여 첫 화면(네비게이션 HTML) 캐시 복구 반환
+      if (!cachedRoot) {
+        const cacheNames = await caches.keys();
+        for (const cacheName of cacheNames) {
+          const cache = await caches.open(cacheName);
+          for (const key of await cache.keys()) {
+            if (key.url.endsWith("/") || key.url.includes("index") || key.mode === "navigate") {
+              const res = await cache.match(key, matchOptions);
+              if (res) {
+                cachedRoot = res;
+                break;
+              }
+            }
+          }
+          if (cachedRoot) break;
+        }
+      }
       if (cachedRoot) return cachedRoot;
-      return new Response("<!DOCTYPE html><html><head><meta charset='utf-8'><title>오프라인 모드</title></head><body style='font-family:sans-serif;padding:2rem;text-align:center;'><h2>현재 오프라인 상태입니다</h2><p>인터넷 연결을 확인하고 다시 시도해 주세요.</p></body></html>", {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
     }
-    // 2. JSON / API 형태의 요청 실패 시 에러 에어백(빈 JSON) 반환으로 fetchevent 에러 방지
+    // 2. JSON / API 형태의 요청 실패 시 에러 에어백(빈 JSON) 반환
     if (request.headers.get("Accept")?.includes("application/json")) {
       return new Response(JSON.stringify({ error: "offline", message: "오프라인 모드입니다." }), {
         status: 200,
@@ -43,6 +61,8 @@ const offlineFallbackPlugin = {
   },
 };
 
+const matchOptions = { ignoreSearch: true, ignoreVary: true };
+
 const runtimeCaching: RuntimeCaching[] = [
   // 1. Google Fonts Stylesheets and Font Files
   {
@@ -52,6 +72,7 @@ const runtimeCaching: RuntimeCaching[] = [
     },
     handler: new CacheFirst({
       cacheName: "google-fonts",
+      matchOptions,
       plugins: [
         new ExpirationPlugin({
           maxEntries: 30,
@@ -74,6 +95,7 @@ const runtimeCaching: RuntimeCaching[] = [
     },
     handler: new CacheFirst({
       cacheName: "static-assets",
+      matchOptions,
       plugins: [
         new ExpirationPlugin({
           maxEntries: 200,
@@ -96,6 +118,7 @@ const runtimeCaching: RuntimeCaching[] = [
     },
     handler: new StaleWhileRevalidate({
       cacheName: "pages-and-rsc",
+      matchOptions,
       plugins: [
         new ExpirationPlugin({
           maxEntries: 50,
@@ -118,6 +141,7 @@ const runtimeCaching: RuntimeCaching[] = [
     },
     handler: new StaleWhileRevalidate({
       cacheName: "catch-all",
+      matchOptions,
       plugins: [
         new ExpirationPlugin({
           maxEntries: 150,
