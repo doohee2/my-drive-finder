@@ -38,6 +38,35 @@ const offlineFallbackPlugin = {
         }
       }
       if (cachedRoot) return cachedRoot;
+
+      // 만약 온라인으로 전혀 접속된 적이 없거나 업데이트 후 초기화되어 캐시가 완전 0개일 경우 친절하고 명확한 안내 화면 반환
+      return new Response(
+        `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>오프라인 캐시 없음 - My Drive Finder</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b1329; color: #e2e8f0; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 1.5rem; text-align: center; }
+    .card { background: #1e293b; border: 1px solid #334155; padding: 2rem; border-radius: 1rem; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    h2 { color: #38bdf8; margin-bottom: 1rem; font-size: 1.3rem; }
+    p { font-size: 0.95rem; line-height: 1.5; color: #94a3b8; margin-bottom: 0; }
+    .highlight { color: #f1f5f9; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>☁️✕ 오프라인 준비 안 됨</h2>
+    <p>아직 오프라인 모드를 사용할 수 없는 상태입니다.<br><br>최근 앱이 업데이트되었거나 최초로 접속하셨을 수 있습니다.<br><span class="highlight">인터넷에 연결된 온라인 상태에서 앱을 1회 실행</span>하여 최신 자산과 첫 화면 데이터를 기기에 동기화해 주시기 바랍니다.</p>
+  </div>
+</body>
+</html>`,
+        {
+          status: 200,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        }
+      );
     }
     // 2. JSON / API 형태의 요청 실패 시 에러 에어백(빈 JSON) 반환
     if (request.headers.get("Accept")?.includes("application/json")) {
@@ -53,10 +82,24 @@ const offlineFallbackPlugin = {
         headers: { "Content-Type": "image/svg+xml" },
       });
     }
-    // 4. 기타 에셋(JS, CSS 등) 실패 시 Promise rejection 대신 안전하게 503 Response 반환
-    return new Response("Offline Resource", {
+    // 4. JS 스크립트 실패 시 브라우저 JS 문법 에러(Syntax Error) 방지를 위해 빈 자바스크립트 반환
+    if (request.destination === "script" || request.url.endsWith(".js") || request.headers.get("Accept")?.includes("javascript")) {
+      return new Response("", {
+        status: 200,
+        headers: { "Content-Type": "application/javascript" },
+      });
+    }
+    // 5. CSS 스타일 실패 시 빈 스타일 반환
+    if (request.destination === "style" || request.url.endsWith(".css") || request.headers.get("Accept")?.includes("text/css")) {
+      return new Response("", {
+        status: 200,
+        headers: { "Content-Type": "text/css" },
+      });
+    }
+    // 6. 기타 알 수 없는 에셋 실패 시 에러 문자열 표출 대신 빈 503 응답
+    return new Response(null, {
       status: 503,
-      statusText: "Offline",
+      statusText: "Service Unavailable Offline",
     });
   },
 };
