@@ -1,4 +1,4 @@
-import type { PrecacheEntry, SerwistGlobalConfig, RuntimeCaching, WorkboxPlugin } from "serwist";
+import type { PrecacheEntry, SerwistGlobalConfig, RuntimeCaching } from "serwist";
 import { Serwist, CacheFirst, StaleWhileRevalidate, ExpirationPlugin, CacheableResponsePlugin } from "serwist";
 
 declare global {
@@ -10,7 +10,7 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 // 오프라인 상태에서 캐시 미스 시 Uncaught FetchEvent Promise Rejection 에러를 방지하는 에러 핸들러 플러그인
-const offlineFallbackPlugin: WorkboxPlugin = {
+const offlineFallbackPlugin = {
   handlerDidError: async ({ request }) => {
     // 1. 네비게이션(페이지 이동) 실패 시 로컬에 저장된 '/' 혹은 fallback 응답 제공
     if (request.mode === "navigate") {
