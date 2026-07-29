@@ -12,6 +12,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session={!isOnline ? null : undefined} 
       refetchInterval={0} 
       refetchOnWindowFocus={false}
+      {...({ refetchWhenOffline: false } as any)}
     >
       {children}
     </SessionProvider>

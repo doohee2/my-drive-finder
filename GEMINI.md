@@ -47,6 +47,9 @@
   - **결과 내보내기**: 필터링된 현재 화면의 데이터를 단일 `.xlsx` 형식으로 내보내는 기능(`handleExport`) 포함.
 
 ## 5. 최근 업데이트 및 주요 기능
+- **오프라인 무한 스피너 폭파 및 하이브리드 능동 회선 감지 적용**:
+  - **하이브리드 능동 회선 판독기 (`useNetworkStatus`)**: 마운트 시 `navigator.onLine` 0초 동기 심검(Zero-Latency)을 적용하고, 서비스 워커의 위조 200 캐시나 가짜 온라인 신호를 회피하기 위해 정적 자원(`/manifest.webmanifest?_t=${Date.now()}`)에 대해 **`HEAD` 메서드 + `no-store` + 1.2초 타임아웃** 능동 핑을 수행하여 실제 통신 생존 여부를 가려내도록 개편했습니다. 화면 활성 시 15초 주기 및 `onfocus`/`ononline` 이벤트에 자동 바인딩되었습니다.
+  - **무한 스피너 차단 및 자동 재동기화 (`QueryProvider` & `AuthProvider`)**: React Query `retry` 설정을 조정하여 오프라인 감지 시 즉시 재시도(`return false`)를 차단해 초기 구동 대기 없이 0.1초 만에 로컬 캐시를 열어주며, 온라인 회복 시 `refetchOnReconnect: true`, `refetchOnWindowFocus: true` 옵션으로 즉각 실시간 자동 회복되도록 보완했습니다. SessionProvider에는 `refetchWhenOffline={false}` 설정을 장착해 무익한 세션 요청을 원천 차단했습니다.
 - **아이콘 및 외부 프로필 이미지 렌더링 무결성 하드닝 (3대 유지보수 지침 적용)**:
   - **CSP 도메인 허용망 보완 (`next.config.ts`)**: 서비스 워커의 `fetch` 통신과 외부 자원 로딩이 차단되지 않도록 `connect-src`, `font-src`, `img-src` 헤더에 `https://*.gstatic.com`, `https://*.googleapis.com`, `https://*.googleusercontent.com`, `https://*.ggpht.com`을 필수로 추가했습니다.
   - **아이콘 FOUT 깜빡임 및 원문 글자 노출 차단 (`app/layout.tsx`)**: Google Fonts 및 gstatic에 대한 사전 연결(`preconnect`, `crossOrigin="anonymous"`) 링크를 장착하고, Material Symbols 아이콘 스타일시트 파라미터를 `display=swap` 대신 **`display=block`**으로 전면 교체하여 아이콘 로딩 지연 시 `search` 같은 일반 글자 원문이 렌더링되는 취약점을 해결했습니다.
