@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { z } from "zod";
+
+const UploadSchema = z.object({
+  folderId: z.string().min(1),
+  fileName: z.string().min(1),
+  fileSize: z.number().positive(),
+});
 
 export const maxDuration = 60;
 
@@ -15,7 +22,17 @@ export async function POST(request: Request) {
     const folderId = formData.get('folderId') as string;
 
     if (!file || !folderId) {
-      return NextResponse.json({ error: "Missing file or folderId" }, { status: 400 });
+      return NextResponse.json({ error: "유효하지 않은 요청 파라미터입니다." }, { status: 400 });
+    }
+
+    const parseResult = UploadSchema.safeParse({
+      folderId: typeof folderId === "string" ? folderId : "",
+      fileName: file?.name || "",
+      fileSize: file?.size || 0,
+    });
+
+    if (!parseResult.success) {
+      return NextResponse.json({ error: "유효하지 않은 파일 또는 대상 폴더입니다." }, { status: 400 });
     }
 
     const metadata = {
@@ -64,6 +81,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, file: uploadedFileData });
   } catch (error: any) {
     console.error("Upload proxy error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "요청을 처리할 수 없습니다." }, { status: 500 });
   }
 }

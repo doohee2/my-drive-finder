@@ -63,7 +63,7 @@ export async function GET() {
   } catch (error: any) {
     console.error("Error fetching drive folders:", error);
     return NextResponse.json(
-      { error: "Failed to fetch folders" },
+      { error: "요청을 처리할 수 없습니다." },
       { status: 500 }
     );
   }

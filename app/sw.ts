@@ -106,6 +106,19 @@ const offlineFallbackPlugin = {
 
 const matchOptions = { ignoreSearch: true, ignoreVary: true };
 
+// Chrome/Edge PC 환경 "문서를 렌더링할 수 없습니다." PDF 오류 및 Range 요청 차단 방지를 위한 바이패스 검사
+const shouldBypass = (request: Request, url: URL): boolean => {
+  if (request.method !== "GET" || !url.protocol.startsWith("http")) return true;
+  if (url.pathname.startsWith("/api/")) return true;
+  // 1) HTTP Range 요청 바이패스 (PC Chrome/Edge PDF Viewer는 206 Partial Range 요청을 필수로 사용하므로 SW 캐시 사용 시 렌더링 실패)
+  if (request.headers.has("range") || Boolean(request.headers.get("range"))) return true;
+  // 2) PDF 파일 경로 또는 쿼리 파라미터에 .pdf가 포함된 경우 바이패스
+  if (url.pathname.toLowerCase().endsWith(".pdf") || url.search.toLowerCase().includes(".pdf")) return true;
+  // 3) Accept 헤더에 application/pdf가 포함되거나 <object>, <embed> 등으로 렌더링되는 문서 요청 바이패스
+  if (request.headers.get("accept")?.toLowerCase().includes("application/pdf") || request.destination === "object" || request.destination === "embed") return true;
+  return false;
+};
+
 const runtimeCaching: RuntimeCaching[] = [
   // 1. Google Fonts Stylesheets and Font Files
   {
@@ -131,9 +144,7 @@ const runtimeCaching: RuntimeCaching[] = [
   // 2. Static Assets (JS, CSS, Icons, Images, Fonts)
   {
     matcher: ({ request, url }) => {
-      if (request.method !== "GET" || !url.protocol.startsWith("http") || url.pathname.startsWith("/api/")) {
-        return false;
-      }
+      if (shouldBypass(request, url)) return false;
       return /\.(?:js|css|ico|png|jpg|jpeg|svg|webp|woff|woff2)(?:\?.*)?$/i.test(url.pathname);
     },
     handler: new CacheFirst({
@@ -154,9 +165,7 @@ const runtimeCaching: RuntimeCaching[] = [
   // 3. HTML Navigation requests and Next.js React Server Components (_rsc)
   {
     matcher: ({ request, url }) => {
-      if (request.method !== "GET" || !url.protocol.startsWith("http") || url.pathname.startsWith("/api/")) {
-        return false;
-      }
+      if (shouldBypass(request, url)) return false;
       return request.mode === "navigate" || url.searchParams.has("_rsc");
     },
     handler: new StaleWhileRevalidate({
@@ -177,9 +186,7 @@ const runtimeCaching: RuntimeCaching[] = [
   // 4. Custom Catch-all rule (excluding /api/, non-GET requests, and non-http protocols)
   {
     matcher: ({ request, url }) => {
-      if (request.method !== "GET" || !url.protocol.startsWith("http") || url.pathname.startsWith("/api/")) {
-        return false;
-      }
+      if (shouldBypass(request, url)) return false;
       return true;
     },
     handler: new StaleWhileRevalidate({

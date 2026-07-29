@@ -172,7 +172,7 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
         }
       }
       
-      const blob = new Blob(chunks);
+      const blob = new Blob(chunks, { type: file.mimeType || 'application/octet-stream' });
       const objectUrl = window.URL.createObjectURL(blob);
       
       const a = document.createElement('a');
@@ -229,7 +229,7 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
         }
       }
       
-      const blob = new Blob(chunks);
+      const blob = new Blob(chunks, { type: file.mimeType || 'application/octet-stream' });
       const url = window.URL.createObjectURL(blob);
       
       // Determine correct extension for Google Workspace files if needed

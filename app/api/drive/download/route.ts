@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { google } from "googleapis";
+import { z } from "zod";
+
+const DownloadQuerySchema = z.object({
+  fileId: z.string().min(1),
+  mimeType: z.string().min(1),
+  filename: z.string().optional(),
+});
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -10,12 +17,17 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const fileId = searchParams.get("fileId");
-  const mimeType = searchParams.get("mimeType");
+  const parseResult = DownloadQuerySchema.safeParse({
+    fileId: searchParams.get("fileId"),
+    mimeType: searchParams.get("mimeType"),
+    filename: searchParams.get("filename") ?? undefined,
+  });
 
-  if (!fileId || !mimeType) {
-    return NextResponse.json({ error: "Missing fileId or mimeType" }, { status: 400 });
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "유효하지 않은 요청 파라미터입니다." }, { status: 400 });
   }
+
+  const { fileId, mimeType, filename } = parseResult.data;
 
   try {
     const oauth2Client = new google.auth.OAuth2();
@@ -56,7 +68,6 @@ export async function GET(request: Request) {
       stream = response.data;
     }
 
-    const filename = searchParams.get("filename");
     const headers = new Headers();
     headers.set('Content-Type', exportMimeType);
     if (filename) {
@@ -76,7 +87,7 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error("Error downloading file:", error);
     return NextResponse.json(
-      { error: "Failed to download file" },
+      { error: "요청을 처리할 수 없습니다." },
       { status: 500 }
     );
   }

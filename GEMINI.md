@@ -47,6 +47,12 @@
   - **결과 내보내기**: 필터링된 현재 화면의 데이터를 단일 `.xlsx` 형식으로 내보내는 기능(`handleExport`) 포함.
 
 ## 5. 최근 업데이트 및 주요 기능
+- **4단계 아키텍처 보안 하드닝(Security Hardening) 적용**: 클라이언트와 서버리스 API 경계의 취약점을 차단하고 엔터프라이즈 급 보안을 달성했습니다.
+  - **Phase 1 (인가 및 Zod 입력 유효성 검증)**: 모든 `/api/drive/**` 엔드포인트에 `Zod` 라이브러리를 도입하여 쿼리 및 폼 파라미터에 대한 엄격한 스키마 유효성 검증(`safeParse`)을 적용했습니다. 외부 API나 서버 내부 예외 메시지가 클라이언트에 전송되지 않도록 500 오류 시 모두 `"요청을 처리할 수 없습니다."`로 통일하는 위생화(Error Sanitization)를 달성했습니다.
+  - **Phase 2 (비밀자격 격리 및 Zero-Leak 지침)**: 구글 OAuth 자격증명 등 모든 비밀 키에서 `NEXT_PUBLIC_` 접두사를 철저히 차단(Zero-Leak 보증)하였으며, Vercel 대시보드 환경 변수 설정 시에도 백엔드 격리를 유지할 수 있도록 모범 지침을 수립했습니다.
+  - **Phase 3 (PWA 로그아웃 시 민감 캐시 파괴 방어막)**: `Header.tsx` 내 로그아웃 트리거 시 단순 `signOut` 호출을 넘어, `window.caches`의 Service Worker 캐시, `localforage(IndexedDB)` 엑셀 데이터, `localStorage` 사용자 설정을 완전히 삭제 및 초기화(Purge)하는 강력한 보호 방어막(`handleSecureSignOut`)을 장착했습니다.
+  - **Phase 4 (6대 HTTP 고강도 보안 헤더 적용)**: `next.config.ts`의 `headers()` 속성을 통해 전역 라우트를 대상으로 CSP(Content-Security-Policy), HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy 등 6대 보안 헤더를 설정하여 클릭재킹, XSS 및 스니핑 공격을 원천 봉쇄했습니다.
+  - **PC 데스크톱 PDF 뷰어 렌더링 호환성 개선**: `sw.ts`에 HTTP Range 요청 및 `.pdf` 파일 요청을 서비스 워커가 건너뛰는(`shouldBypass`) 필터를 장착하고 Blob 다운로드 시 MIME Type을 명시하여 PC 환경(크롬/엣지) 내 PDF 렌더러가 끊김 없이 작동하도록 개선했습니다.
 - **오프라인 최우선(Offline-First) PWA 아키텍처 개편**: 0.1초 컷으로 즉시 화면이 뜨는 오프라인 PWA 사용 경험을 구현했습니다.
   - **Serwist 커스텀 캐시 전략 (`sw.ts`)**: Serwist 기본 매칭 규칙(`defaultCache`)의 `NetworkOnly` 강제 버그를 차단하기 위해 커스텀 캐치올(catch-all)을 작성했습니다. 정적 자산(JS/CSS/이미지/폰트)은 `CacheFirst`, HTML 문서와 Next.js RSC(`_rsc`)는 `StaleWhileRevalidate`를 강제 적용하며, `navigationPreload: false`로 렌더링 지연을 차단했습니다.
   - **iOS Safari PWA Standalone 지원**: `layout.tsx` 내 `appleWebApp` 메타데이터 추가 및 `SessionProvider`의 잦은 백그라운드 요청(`refetchInterval={0}`, `refetchOnWindowFocus={false}`)을 방지하여 오프라인 시 iOS Safari 화면 프리징을 완벽 해결했습니다.

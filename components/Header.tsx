@@ -6,6 +6,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useSelectedFolder } from "@/hooks/useSelectedFolder";
 import { useDriveSync } from "@/hooks/useDriveSync";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import localforage from "localforage";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -44,6 +45,23 @@ export function Header() {
       } catch (e) {
         console.error("Cache clear error:", e);
         window.location.reload();
+      }
+    }
+  };
+
+  const handleSecureSignOut = async () => {
+    if (window.confirm("로그아웃 하시겠습니까? (로컬에 캐싱된 검색 데이터 및 오프라인 즐겨찾기 목록이 모두 보안성 향상을 위해 초기화됩니다)")) {
+      try {
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((key) => caches.delete(key)));
+        }
+        await localforage.clear();
+        localStorage.clear();
+      } catch (e) {
+        console.error("Secure sign-out cache clear error:", e);
+      } finally {
+        signOut();
       }
     }
   };
@@ -123,7 +141,7 @@ export function Header() {
 
             {session ? (
               <button
-                onClick={() => isOnline && signOut()}
+                onClick={() => isOnline && handleSecureSignOut()}
                 disabled={!isOnline}
                 className="text-on-surface-variant hover:bg-surface-variant/50 p-1.5 rounded-full transition-colors flex items-center justify-center overflow-hidden ml-1 disabled:opacity-30 disabled:cursor-not-allowed"
                 title={!isOnline ? "오프라인 상태에서는 로그아웃할 수 없습니다" : "로그아웃"}

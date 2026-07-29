@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { google } from "googleapis";
+import { z } from "zod";
+
+const FilesQuerySchema = z.object({
+  folderId: z.string().min(1),
+});
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -10,11 +15,15 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const folderId = searchParams.get("folderId");
+  const parseResult = FilesQuerySchema.safeParse({
+    folderId: searchParams.get("folderId"),
+  });
 
-  if (!folderId) {
-    return NextResponse.json({ error: "Missing folderId" }, { status: 400 });
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "유효하지 않은 요청 파라미터입니다." }, { status: 400 });
   }
+
+  const { folderId } = parseResult.data;
 
   try {
     const oauth2Client = new google.auth.OAuth2();
@@ -45,7 +54,7 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error("Error fetching drive files:", error);
     return NextResponse.json(
-      { error: "Failed to fetch files" },
+      { error: "요청을 처리할 수 없습니다." },
       { status: 500 }
     );
   }
