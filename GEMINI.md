@@ -47,6 +47,10 @@
   - **결과 내보내기**: 필터링된 현재 화면의 데이터를 단일 `.xlsx` 형식으로 내보내는 기능(`handleExport`) 포함.
 
 ## 5. 최근 업데이트 및 주요 기능
+- **아이콘 및 외부 프로필 이미지 렌더링 무결성 하드닝 (3대 유지보수 지침 적용)**:
+  - **CSP 도메인 허용망 보완 (`next.config.ts`)**: 서비스 워커의 `fetch` 통신과 외부 자원 로딩이 차단되지 않도록 `connect-src`, `font-src`, `img-src` 헤더에 `https://*.gstatic.com`, `https://*.googleapis.com`, `https://*.googleusercontent.com`, `https://*.ggpht.com`을 필수로 추가했습니다.
+  - **아이콘 FOUT 깜빡임 및 원문 글자 노출 차단 (`app/layout.tsx`)**: Google Fonts 및 gstatic에 대한 사전 연결(`preconnect`, `crossOrigin="anonymous"`) 링크를 장착하고, Material Symbols 아이콘 스타일시트 파라미터를 `display=swap` 대신 **`display=block`**으로 전면 교체하여 아이콘 로딩 지연 시 `search` 같은 일반 글자 원문이 렌더링되는 취약점을 해결했습니다.
+  - **서비스 워커 캐시 룰 분리 및 0번 응답 방어 (`sw.ts`)**: 구글 폰트 및 외부 교차 도메인 리소스(프로필 아바타 CDN 등)를 최상위 우선순위의 **`StaleWhileRevalidate` (30일 이하)** 규칙으로 분리하고, Opaque(상태 코드 0) 에러나 일시적 차단이 고정 캐싱되지 않도록 **`CacheableResponsePlugin({ statuses: [0, 200] })`**을 적용했습니다. 프로젝트 내부의 static 고정 자산(`/_next/static/*` 등)만 1년짜리 `CacheFirst`를 유지하도록 정렬했습니다.
 - **4단계 아키텍처 보안 하드닝(Security Hardening) 적용**: 클라이언트와 서버리스 API 경계의 취약점을 차단하고 엔터프라이즈 급 보안을 달성했습니다.
   - **Phase 1 (인가 및 Zod 입력 유효성 검증)**: 모든 `/api/drive/**` 엔드포인트에 `Zod` 라이브러리를 도입하여 쿼리 및 폼 파라미터에 대한 엄격한 스키마 유효성 검증(`safeParse`)을 적용했습니다. 외부 API나 서버 내부 예외 메시지가 클라이언트에 전송되지 않도록 500 오류 시 모두 `"요청을 처리할 수 없습니다."`로 통일하는 위생화(Error Sanitization)를 달성했습니다.
   - **Phase 2 (비밀자격 격리 및 Zero-Leak 지침)**: 구글 OAuth 자격증명 등 모든 비밀 키에서 `NEXT_PUBLIC_` 접두사를 철저히 차단(Zero-Leak 보증)하였으며, Vercel 대시보드 환경 변수 설정 시에도 백엔드 격리를 유지할 수 있도록 모범 지침을 수립했습니다.

@@ -120,40 +120,47 @@ const shouldBypass = (request: Request, url: URL): boolean => {
 };
 
 const runtimeCaching: RuntimeCaching[] = [
-  // 1. Google Fonts Stylesheets and Font Files
+  // 1. 구글 폰트 및 외부 교차 도메인 리소스 (폰트 파일, 프로필 아바타 CDN 등) -> StaleWhileRevalidate (30일 이하)
   {
     matcher: ({ request, url }) => {
       if (request.method !== "GET" || !url.protocol.startsWith("http")) return false;
-      return /^https:\/\/fonts\.(?:googleapis|gstatic)\.com/i.test(url.href);
+      return (
+        /^https:\/\/(?:fonts\.googleapis\.com|fonts\.gstatic\.com|[^\/]+\.googleusercontent\.com|[^\/]+\.ggpht\.com)/i.test(url.href) ||
+        (url.origin !== self.location.origin && request.destination === "image")
+      );
     },
-    handler: new CacheFirst({
-      cacheName: "google-fonts",
+    handler: new StaleWhileRevalidate({
+      cacheName: "external-fonts-and-images",
       matchOptions,
       plugins: [
         new ExpirationPlugin({
-          maxEntries: 30,
-          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+          maxEntries: 60,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30일 이하 유효기간
         }),
         new CacheableResponsePlugin({
-          statuses: [0, 200],
+          statuses: [0, 200], // Opaque(0) 응답 방어 및 정상 처리
         }),
         offlineFallbackPlugin,
       ],
     }),
   },
-  // 2. Static Assets (JS, CSS, Icons, Images, Fonts)
+  // 2. 프로젝트 내부 static 고정 자산 (/_next/static/ 등) -> 1년 CacheFirst 유지
   {
     matcher: ({ request, url }) => {
       if (shouldBypass(request, url)) return false;
-      return /\.(?:js|css|ico|png|jpg|jpeg|svg|webp|woff|woff2)(?:\?.*)?$/i.test(url.pathname);
+      if (url.origin !== self.location.origin) return false;
+      return (
+        url.pathname.startsWith("/_next/static/") ||
+        /\.(?:js|css|ico|png|jpg|jpeg|svg|webp|woff|woff2)(?:\?.*)?$/i.test(url.pathname)
+      );
     },
     handler: new CacheFirst({
-      cacheName: "static-assets",
+      cacheName: "internal-static-assets",
       matchOptions,
       plugins: [
         new ExpirationPlugin({
           maxEntries: 200,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxAgeSeconds: 365 * 24 * 60 * 60, // 1년 유효기간
         }),
         new CacheableResponsePlugin({
           statuses: [0, 200],
