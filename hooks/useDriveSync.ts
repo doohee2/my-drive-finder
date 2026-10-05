@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import localforage from "localforage";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
+import { fetchWithSessionRetry } from "@/lib/fetchWithSessionRetry";
 
 interface DriveFile {
   id: string;
@@ -66,7 +67,7 @@ export function useDriveSync(folderId?: string | null) {
 
       try {
         // 1. Fetch remote file metadata
-        const res = await fetch(`/api/drive/files?folderId=${folderId}`, {
+        const res = await fetchWithSessionRetry(`/api/drive/files?folderId=${folderId}`, {
           signal: AbortSignal.timeout(5000),
         });
         if (!res.ok) throw new Error("Failed to fetch file list");
@@ -92,7 +93,7 @@ export function useDriveSync(folderId?: string | null) {
             hasChanges = true;
             setSyncProgress(`다운로드 중... (${i + 1}/${files.length}) ${file.name}`);
 
-            const dlRes = await fetch(`/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}`, {
+            const dlRes = await fetchWithSessionRetry(`/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}`, {
               signal: AbortSignal.timeout(5000),
             });
             if (!dlRes.ok) {

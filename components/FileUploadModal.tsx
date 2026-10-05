@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { fetchWithSessionRetry } from "@/lib/fetchWithSessionRetry";
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -106,7 +107,7 @@ export function FileUploadModal({ isOpen, onClose, file, targetFolder }: FileUpl
         parents: [targetFolder.id]
       };
       
-      const initRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+      const initRes = await fetchWithSessionRetry('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.accessToken}`,

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { fetchWithSessionRetry } from "@/lib/fetchWithSessionRetry";
 
 interface Folder {
   id: string;
@@ -48,7 +49,7 @@ export function FolderPickerModal({ isOpen, onClose, onSelectFolder }: FolderPic
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/drive/folders");
+      const res = await fetchWithSessionRetry("/api/drive/folders");
       if (!res.ok) {
         throw new Error("Failed to fetch folders");
       }

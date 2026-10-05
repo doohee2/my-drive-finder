@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { fetchWithSessionRetry } from "@/lib/fetchWithSessionRetry";
 
 interface DriveItem {
   id: string;
@@ -54,7 +55,7 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/drive/explore?folderId=${folderId}`);
+      const res = await fetchWithSessionRetry(`/api/drive/explore?folderId=${folderId}`);
       if (!res.ok) throw new Error("Failed to fetch folder contents");
       
       const data = await res.json();
@@ -147,7 +148,7 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
         if (file.mimeType === 'application/vnd.google-apps.presentation' && !finalName.endsWith('.pptx')) finalName += '.pptx';
       }
 
-      const res = await fetch(url, {
+      const res = await fetchWithSessionRetry(url, {
         headers: {
           Authorization: `Bearer ${session.accessToken}`
         },
@@ -208,7 +209,7 @@ export function FileExplorerModal({ isOpen, onClose }: FileExplorerModalProps) {
     setAbortController(controller);
     
     try {
-      const res = await fetch(`/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}`, {
+      const res = await fetchWithSessionRetry(`/api/drive/download?fileId=${file.id}&mimeType=${encodeURIComponent(file.mimeType)}`, {
         signal: controller.signal
       });
       if (!res.ok) throw new Error("다운로드에 실패했습니다.");

@@ -47,6 +47,10 @@
   - **결과 내보내기**: 필터링된 현재 화면의 데이터를 단일 `.xlsx` 형식으로 내보내는 기능(`handleExport`) 포함.
 
 ## 5. 최근 업데이트 및 주요 기능
+- **Google OAuth 세션 유지 및 토큰 갱신 안정화 (Session Persistence)**:
+  - 클라이언트의 Access Token 갱신 로직(`auth.ts`)을 고도화하여, 토큰 갱신 실패를 **치명적 실패(`invalid_grant`, 권한 철회 등)**와 **일시적 실패(네트워크 오류 등)**로 구분했습니다. 치명적 실패 시에만 강제 로그아웃 처리되며, 일시적 실패는 묵인하고 다음 요청 시 재시도하도록 완화했습니다.
+  - API 통신 시 401 에러를 만났을 때 즉시 로그아웃 하던 낡은 동작을 폐기하고, **`fetchWithSessionRetry`** 공용 헬퍼를 도입했습니다. 401 응답 시 내부적으로 세션을 리프레시(`getSession()`)하여 토큰을 갱신한 뒤, 투명하게 1회 자동 재시도하여 사용자 경험이 단절되지 않도록 방어 로직을 짰습니다.
+  - 갱신이 원활하게 진행될 수 있도록 토큰 만료 60초 전부터 사전 갱신(Early Refresh)을 시도하며, 브라우저 세션 쿠키 수명(`maxAge`)을 **180일**로 대폭 늘려 다시 로그인해야 하는 빈도를 획기적으로 줄였습니다.
 - **오프라인 무한 스피너 폭파 및 하이브리드 능동 회선 감지 적용**:
   - **하이브리드 능동 회선 판독기 (`useNetworkStatus`)**: 마운트 시 `navigator.onLine` 0초 동기 심검(Zero-Latency)을 적용하고, 서비스 워커의 위조 200 캐시나 가짜 온라인 신호를 회피하기 위해 정적 자원(`/manifest.webmanifest?_t=${Date.now()}`)에 대해 **`HEAD` 메서드 + `no-store` + 1.2초 타임아웃** 능동 핑을 수행하여 실제 통신 생존 여부를 가려내도록 개편했습니다. 화면 활성 시 15초 주기 및 `onfocus`/`ononline` 이벤트에 자동 바인딩되었습니다.
   - **무한 스피너 차단 및 자동 재동기화 (`QueryProvider` & `AuthProvider`)**: React Query `retry` 설정을 조정하여 오프라인 감지 시 즉시 재시도(`return false`)를 차단해 초기 구동 대기 없이 0.1초 만에 로컬 캐시를 열어주며, 온라인 회복 시 `refetchOnReconnect: true`, `refetchOnWindowFocus: true` 옵션으로 즉각 실시간 자동 회복되도록 보완했습니다. SessionProvider에는 `refetchWhenOffline={false}` 설정을 장착해 무익한 세션 요청을 원천 차단했습니다.

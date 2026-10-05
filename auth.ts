@@ -68,9 +68,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Fall back to old refresh token
           refreshToken: tokens.refresh_token ?? token.refreshToken,
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error refreshing access token", error)
-        return { ...token, error: "RefreshAccessTokenError" }
+        // 치명적 실패(invalid_grant 등)와 일시적 실패(네트워크 오류 등) 구분
+        if (error?.error === "invalid_grant" || error?.error === "invalid_client" || error?.error === "invalid_request") {
+          return { ...token, error: "RefreshAccessTokenError" }
+        }
+        // 일시적 오류(네트워크 끊김, 타임아웃 등) 시 기존 토큰 유지 (다음 요청 시 재시도)
+        return token
       }
     },
     async session({ session, token }) {
@@ -78,5 +83,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.error = token.error as string | undefined
       return session
     },
+  },
+  session: {
+    maxAge: 180 * 24 * 60 * 60, // 180일
   },
 })
