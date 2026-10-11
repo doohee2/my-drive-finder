@@ -97,16 +97,19 @@ export function Header() {
             )}
 
             {selectedFolder && (
-              <div className="hidden md:flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant bg-surface-container-highest px-3 py-1.5 rounded-full">
+              <div 
+                className="hidden md:flex items-center gap-1.5 text-[11px] font-label-sm text-on-surface-variant bg-surface-container-highest px-2.5 py-1 rounded-full"
+                title={lastSyncTime ? `마지막 동기화: ${new Date(lastSyncTime).toLocaleString()}` : undefined}
+              >
                 {isSyncing ? (
                   <>
-                    <span className="material-symbols-outlined text-primary animate-spin text-sm">refresh</span>
+                    <span className="material-symbols-outlined text-primary animate-spin text-[13px]">refresh</span>
                     <span className="truncate max-w-[200px]">{syncProgress || "동기화 중..."}</span>
                   </>
                 ) : (
                   <>
-                    <span className="w-2 h-2 rounded-full bg-secondary-fixed"></span>
-                    {lastSyncTime ? `동기화됨 (${new Date(lastSyncTime).toLocaleTimeString()})` : "동기화 대기 중"}
+                    <span className="w-1.5 h-1.5 rounded-full bg-secondary-fixed"></span>
+                    {lastSyncTime ? "동기화됨" : "동기화 대기 중"}
                   </>
                 )}
               </div>
