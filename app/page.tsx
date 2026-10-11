@@ -20,8 +20,18 @@ import { APP_CONFIG } from "@/lib/config";
 
 export default function Home() {
   const [selectedFolder, setSelectedFolder] = useSelectedFolder();
-  const { cachedData, lastSyncTime } = useDriveSync(selectedFolder?.id);
+  const { cachedData, lastSyncTime, isSyncing, syncProgress, sync } = useDriveSync(selectedFolder?.id);
   const { isOnline } = useNetworkStatus();
+
+  const needsSync = Boolean(selectedFolder && !lastSyncTime);
+
+  const handleStartSync = () => {
+    if (!isOnline) {
+      alert("오프라인 상태에서는 동기화할 수 없습니다. 인터넷 연결을 확인해주세요.");
+      return;
+    }
+    sync();
+  };
 
   const [query, setQuery] = useState("");
   const [excludeQuery, setExcludeQuery] = useState("");
@@ -91,7 +101,11 @@ export default function Home() {
                   excludeQuery={excludeQuery} 
                   setExcludeQuery={setExcludeQuery} 
                   excludeEnabled={excludeEnabled} 
-                  setExcludeEnabled={setExcludeEnabled} 
+                  setExcludeEnabled={setExcludeEnabled}
+                  needsSync={needsSync}
+                  isSyncing={isSyncing}
+                  syncProgress={syncProgress}
+                  onStartSync={handleStartSync}
                 />
                 {query.trim() === "" ? (
                   <EmptyState />

@@ -80,10 +80,10 @@ export function Header() {
             <img
               src={mounted && theme === "dark" ? "/icon-192x192-dark.png" : "/icon-192x192.png"}
               alt="Drive Finder Logo"
-              className="w-8 h-8 rounded-lg shadow-sm transition-transform duration-200 group-hover:scale-105"
+              className="w-8 h-8 rounded-lg"
             />
             <div className="flex items-center">
-              <svg viewBox="0 0 250 60" className="h-[26px] sm:h-[32px] w-auto drop-shadow-sm ml-1" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'var(--font-plus-jakarta-sans), sans-serif' }}>
+              <svg viewBox="0 0 250 60" className="h-[26px] sm:h-[32px] w-auto ml-1" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'var(--font-plus-jakarta-sans), sans-serif' }}>
                 <text x="0" y="45" fontWeight="800" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#0058bd'} className="transition-colors duration-300">Drive</text>
                 <text x="110" y="45" fontWeight="700" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#191b22'} className="transition-colors duration-300">Finder</text>
               </svg>
@@ -174,9 +174,9 @@ export function Header() {
                 <img
                   src={mounted && theme === "dark" ? "/icon-192x192-dark.png" : "/icon-192x192.png"}
                   alt="Drive Finder Logo"
-                  className="w-7 h-7 rounded-lg shadow-sm"
+                  className="w-7 h-7 rounded-lg"
                 />
-                <svg viewBox="0 0 250 60" className="h-[24px] sm:h-[26px] w-auto drop-shadow-sm ml-0.5" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'var(--font-plus-jakarta-sans), sans-serif' }}>
+                <svg viewBox="0 0 250 60" className="h-[24px] sm:h-[26px] w-auto ml-0.5" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'var(--font-plus-jakarta-sans), sans-serif' }}>
                   <text x="0" y="45" fontWeight="800" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#0058bd'} className="transition-colors duration-300">Drive</text>
                   <text x="110" y="45" fontWeight="700" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#191b22'} className="transition-colors duration-300">Finder</text>
                 </svg>
