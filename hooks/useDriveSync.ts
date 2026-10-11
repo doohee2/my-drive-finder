@@ -167,6 +167,7 @@ export function useDriveSync(folderId?: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [cacheKey] });
       queryClient.invalidateQueries({ queryKey: [`lastSync_${folderId}`] });
+      queryClient.invalidateQueries({ queryKey: [`cacheSize_${folderId}`] });
     },
   });
 

@@ -7,6 +7,7 @@ import { useSelectedFolder } from "@/hooks/useSelectedFolder";
 import { useDriveSync } from "@/hooks/useDriveSync";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import localforage from "localforage";
+import { APP_CONFIG } from "@/lib/config";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -70,26 +71,24 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 w-full bg-surface-container-lowest border-b border-outline-variant/10 shadow-sm transition-colors duration-300">
         <div className="flex h-12 md:h-16 items-center px-2 md:px-6 w-full max-w-[1440px] mx-auto gap-1.5 md:gap-2">
-          <div className="flex items-center gap-2 md:gap-3">
+          <button
+            onClick={() => setIsInfoOpen(true)}
+            className="flex items-center gap-2 md:gap-3 cursor-pointer group text-left focus:outline-none rounded-lg p-1 -ml-1 hover:bg-surface-variant/40 transition-colors"
+            aria-label="앱 안내"
+            title="앱 안내 열기"
+          >
             <img
               src={mounted && theme === "dark" ? "/icon-192x192-dark.png" : "/icon-192x192.png"}
               alt="Drive Finder Logo"
-              className="w-8 h-8 rounded-lg shadow-sm transition-opacity duration-300"
+              className="w-8 h-8 rounded-lg shadow-sm transition-transform duration-200 group-hover:scale-105"
             />
-            <div className="flex items-center gap-1">
+            <div className="flex items-center">
               <svg viewBox="0 0 250 60" className="h-[26px] sm:h-[32px] w-auto drop-shadow-sm ml-1" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'var(--font-plus-jakarta-sans), sans-serif' }}>
                 <text x="0" y="45" fontWeight="800" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#0058bd'} className="transition-colors duration-300">Drive</text>
                 <text x="110" y="45" fontWeight="700" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#191b22'} className="transition-colors duration-300">Finder</text>
               </svg>
-              <button
-                onClick={() => setIsInfoOpen(true)}
-                className="text-outline hover:text-primary transition-colors flex items-center justify-center p-1 rounded-full hover:bg-surface-variant"
-                aria-label="앱 정보"
-              >
-                <span className="material-symbols-outlined text-[20px]">info</span>
-              </button>
             </div>
-          </div>
+          </button>
           <div className="flex items-center gap-1.5 ml-auto">
             {!isOnline && (
               <div className="flex items-center justify-center p-1.5 text-error" title="오프라인 모드 (로컬 즐겨찾기 캐시만 검색 가능)">
@@ -171,10 +170,17 @@ export function Header() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsInfoOpen(false)}>
           <div className="bg-surface dark:bg-surface-dim w-full max-w-sm rounded-2xl shadow-xl p-6" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">info</span>
-                안내
-              </h3>
+              <div className="flex items-center gap-2">
+                <img
+                  src={mounted && theme === "dark" ? "/icon-192x192-dark.png" : "/icon-192x192.png"}
+                  alt="Drive Finder Logo"
+                  className="w-7 h-7 rounded-lg shadow-sm"
+                />
+                <svg viewBox="0 0 250 60" className="h-[24px] sm:h-[26px] w-auto drop-shadow-sm ml-0.5" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'var(--font-plus-jakarta-sans), sans-serif' }}>
+                  <text x="0" y="45" fontWeight="800" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#0058bd'} className="transition-colors duration-300">Drive</text>
+                  <text x="110" y="45" fontWeight="700" fontSize="42" letterSpacing="-0.02em" fill={mounted && theme === 'dark' ? '#ffffff' : '#191b22'} className="transition-colors duration-300">Finder</text>
+                </svg>
+              </div>
               <button onClick={() => setIsInfoOpen(false)} className="text-on-surface-variant hover:text-on-surface">
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -190,13 +196,16 @@ export function Header() {
                 <span className="material-symbols-outlined text-[18px]">update</span>
                 캐시 비우고 최신 버전으로 업데이트
               </button>
-              <div className="flex justify-end mt-1">
-                <button
-                  onClick={() => setIsInfoOpen(false)}
-                  className="bg-primary hover:bg-primary/90 text-on-primary px-4 py-2 rounded-lg text-label-md font-medium transition-colors"
+              <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-on-surface-variant/70 pt-2 border-t border-outline-variant/10 mt-1">
+                <a
+                  href="https://landing-doohee2.vercel.app/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors hover:underline cursor-pointer"
                 >
-                  확인
-                </button>
+                  개인정보처리방침
+                </a>
+                <span>{APP_CONFIG.lastModifiedText}</span>
               </div>
             </div>
           </div>
