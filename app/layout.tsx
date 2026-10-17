@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   title: "드라이브 검색",
   description: "Fast local cache and search for Google Drive spreadsheets",
   manifest: "/manifest.json",
+  verification: {
+    google: "WdxZQ1sGoma51XTaHhrfapOp64txalt2SBACCB7GOCY",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
